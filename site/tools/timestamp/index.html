@@ -5,6 +5,70 @@
     <title>Timestamp Converter — Unix, FILETIME, NTP, Excel, GPS epochs | hexbase.dev</title>
     <meta name="description" content="Convert timestamps between every epoch that matters: Unix seconds to nanoseconds, Windows FILETIME, .NET ticks, NTP, Excel serial dates, HFS+, Cocoa and GPS time — with world-clock view and epoch reference. Runs locally." />
     <link rel="canonical" href="https://hexbase.dev/tools/timestamp/" />
+    <meta property="og:title" content="Timestamp Converter — Unix, FILETIME, NTP, Excel, GPS epochs" />
+    <meta property="og:description" content="Convert timestamps between every epoch that matters: Unix s/ms/µs/ns, Windows FILETIME, .NET ticks, NTP, Excel serials, HFS+, Cocoa, GPS — with plausibility ranking. Runs locally." />
+    <meta property="og:url" content="https://hexbase.dev/tools/timestamp/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/timestamp/#app",
+            "name": "Timestamp Converter",
+            "url": "https://hexbase.dev/tools/timestamp/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online timestamp and epoch converter: paste any number and read it against Unix seconds/milliseconds/microseconds/nanoseconds, Windows FILETIME, .NET ticks, NTP, Excel serial dates, HFS+, Cocoa and GPS time — with the plausible readings ranked first.",
+            "featureList": [
+              "Unix time in seconds, milliseconds, microseconds and nanoseconds",
+              "Windows FILETIME, .NET ticks, NTP, Excel serial, HFS+ (1904), Cocoa (2001), GPS time",
+              "ISO 8601 / RFC 3339 string parsing",
+              "Plausibility ranking of every possible reading",
+              "World clock: the same instant across time zones",
+              "Live 'now' panel in every supported epoch",
+              "Local-first: runs in the browser"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "Timestamp Converter", "item": "https://hexbase.dev/tools/timestamp/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How do I tell if a Unix timestamp is in seconds, milliseconds or nanoseconds?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Count the digits: dates near the present are 10 digits in seconds, 13 in milliseconds, 16 in microseconds and 19 in nanoseconds. Or paste the number here — the converter reads it against every unit and epoch and ranks the readings by how plausible the resulting date is." }
+              },
+              {
+                "@type": "Question",
+                "name": "What is Windows FILETIME?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A 64-bit count of 100-nanosecond intervals since 1601-01-01 UTC — the start of the 400-year Gregorian cycle that was current when Windows NT was designed. Present-day values are 18 digits, like 133497696000000000." }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the year 2038 problem?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Signed 32-bit time_t overflows at 2038-01-19 03:14:07 UTC and wraps to December 1901. 64-bit systems are safe, but embedded devices, old file formats and 32-bit protocol fields keep the bug alive. A date in December 1901, or exactly 1970-01-01, usually means an overflow or an uninitialized zero." }
+              },
+              {
+                "@type": "Question",
+                "name": "Which timestamp formats does the converter support?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Unix time in seconds, milliseconds, microseconds and nanoseconds; Windows FILETIME; .NET ticks; NTP; Excel serial dates; HFS+ (1904 epoch); Apple Cocoa (2001 epoch); GPS time; and ISO 8601 / RFC 3339 strings — converted in both directions." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!--#include:header-->
@@ -78,6 +142,35 @@
           18&nbsp;s ahead of UTC. Google and AWS "smear" the extra second across the surrounding day instead. A new
           wrinkle: Earth sped up recently, and a <em>negative</em> leap second is on the table before the practice is
           abolished (currently planned around 2035).
+        </p>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>How do I tell if a Unix timestamp is in seconds, milliseconds or nanoseconds?</h3>
+        <p>
+          Count the digits: dates near the present are 10 digits in seconds, 13 in milliseconds, 16 in microseconds
+          and 19 in nanoseconds. Or paste the number here — the converter reads it against every unit and epoch and
+          ranks the readings by how plausible the resulting date is.
+        </p>
+        <h3>What is Windows FILETIME?</h3>
+        <p>
+          A 64-bit count of 100-nanosecond intervals since <code>1601-01-01 UTC</code> — the start of the 400-year
+          Gregorian cycle that was current when Windows NT was designed. Present-day values are 18 digits, like
+          <code>133497696000000000</code>.
+        </p>
+        <h3>What is the year 2038 problem?</h3>
+        <p>
+          Signed 32-bit <code>time_t</code> overflows at <code>2038-01-19 03:14:07 UTC</code> and wraps to December
+          1901. 64-bit systems are safe, but embedded devices, old file formats and 32-bit protocol fields keep the
+          bug alive. A date in December 1901, or exactly 1970-01-01, usually means an overflow or an uninitialized
+          zero.
+        </p>
+        <h3>Which timestamp formats does the converter support?</h3>
+        <p>
+          Unix time in seconds, milliseconds, microseconds and nanoseconds; Windows FILETIME; .NET ticks; NTP; Excel
+          serial dates; HFS+ (1904 epoch); Apple Cocoa (2001 epoch); GPS time; and ISO 8601 / RFC 3339 strings —
+          converted in both directions.
         </p>
       </section>
     </main>

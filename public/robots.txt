@@ -1,6 +1,14 @@
+# hexbase.dev — search engines and AI crawlers are all welcome.
+# Machine-readable site overview for LLMs: https://hexbase.dev/llms.txt
+# The only crawl exclusions are the JSON API and ephemeral share links.
+
 User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /s/
+
+# AI assistants and their crawlers (GPTBot, ClaudeBot, Claude-Web, PerplexityBot,
+# Google-Extended, Applebot-Extended, CCBot, meta-externalagent, Bytespider …)
+# follow the same rules as everyone else: everything except /api/ and /s/.
 
 Sitemap: https://hexbase.dev/sitemap.xml

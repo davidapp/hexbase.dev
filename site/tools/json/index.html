@@ -5,6 +5,70 @@
     <title>JSON Toolkit — format, validate, tree view, JSON to TypeScript | hexbase.dev</title>
     <meta name="description" content="Format, minify and validate JSON with exact line/column errors that explain the mistake. Collapsible tree view, document stats, and JSON → TypeScript interface generation. Runs locally in your browser." />
     <link rel="canonical" href="https://hexbase.dev/tools/json/" />
+    <meta property="og:title" content="JSON Toolkit — format, validate, tree view, JSON to TypeScript" />
+    <meta property="og:description" content="Format, minify and validate JSON with exact line/column errors that explain the mistake. Tree view, stats, and JSON → TypeScript generation. Runs locally." />
+    <meta property="og:url" content="https://hexbase.dev/tools/json/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/json/#app",
+            "name": "JSON Toolkit",
+            "url": "https://hexbase.dev/tools/json/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online JSON formatter, validator and converter: pretty-print or minify, get exact line/column errors with plain-English explanations, browse a collapsible tree view, and generate TypeScript interfaces — all locally in your browser.",
+            "featureList": [
+              "Format and minify with configurable indentation",
+              "Sort object keys",
+              "Validation with exact line:column and an explanation of each mistake",
+              "Collapsible tree view with JSON-path copy",
+              "Document statistics",
+              "JSON to TypeScript interface generation",
+              "Local-first: your JSON is processed in the browser and never uploaded"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "JSON Toolkit", "item": "https://hexbase.dev/tools/json/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Why is my JSON invalid?",
+                "acceptedAnswer": { "@type": "Answer", "text": "The usual suspects are trailing commas, single quotes instead of double quotes, unquoted keys, comments, and NaN/Infinity/undefined values — all legal in JavaScript but not in JSON. Paste your document and the validator points at the exact line and column and explains the specific mistake." }
+              },
+              {
+                "@type": "Question",
+                "name": "Does JSON allow comments or trailing commas?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. Standard JSON (RFC 8259) forbids both. JSONC and JSON5 are separate, more permissive formats — which is why a config file that works in VS Code can fail in a strict parser." }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I convert JSON to TypeScript types?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes — the → TypeScript button generates interfaces from your document, merging the object shapes it finds across array elements and marking keys that don't appear everywhere as optional." }
+              },
+              {
+                "@type": "Question",
+                "name": "Is it safe to paste sensitive JSON here?",
+                "acceptedAnswer": { "@type": "Answer", "text": "The formatter, validator and TypeScript generator run entirely in your browser — your document is never uploaded. Nothing leaves your machine unless you explicitly click Share." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!--#include:header-->
@@ -98,6 +162,32 @@
           Close cousins, not twins: JSON requires double quotes and forbids comments, trailing commas and
           <code>undefined</code>. In the other direction, JSON permits <code>U+2028/U+2029</code> unescaped, which for
           years made "valid JSON" that crashed as JavaScript. Treat JSON as a data format that merely dresses like JS.
+        </p>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>Why is my JSON invalid?</h3>
+        <p>
+          The usual suspects are trailing commas, single quotes instead of double quotes, unquoted keys, comments, and
+          <code>NaN</code>/<code>Infinity</code>/<code>undefined</code> values — all legal in JavaScript but not in
+          JSON. Paste your document and the validator points at the exact line and column and explains the specific
+          mistake.
+        </p>
+        <h3>Does JSON allow comments or trailing commas?</h3>
+        <p>
+          No. Standard JSON (RFC 8259) forbids both. JSONC and JSON5 are separate, more permissive formats — which is
+          why a config file that works in VS Code can fail in a strict parser.
+        </p>
+        <h3>Can I convert JSON to TypeScript types?</h3>
+        <p>
+          Yes — the <em>→ TypeScript</em> button generates interfaces from your document, merging the object shapes it
+          finds across array elements and marking keys that don't appear everywhere as optional.
+        </p>
+        <h3>Is it safe to paste sensitive JSON here?</h3>
+        <p>
+          The formatter, validator and TypeScript generator run entirely in your browser — your document is never
+          uploaded. Nothing leaves your machine unless you explicitly click <em>Share</em>.
         </p>
       </section>
     </main>

@@ -36,6 +36,8 @@ export default defineConfig({
         home: resolve(site, 'index.html'),
         notfound: resolve(site, '404.html'),
         links: resolve(site, 'links/index.html'),
+        terms: resolve(site, 'terms/index.html'),
+        privacy: resolve(site, 'privacy/index.html'),
         hex: resolve(site, 'tools/hex/index.html'),
         json: resolve(site, 'tools/json/index.html'),
         xml: resolve(site, 'tools/xml/index.html'),

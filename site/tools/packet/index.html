@@ -5,6 +5,75 @@
     <title>Packet Decoder — decode network protocol hex dumps online | hexbase.dev</title>
     <meta name="description" content="Paste a raw packet hex dump and decode the full protocol stack: Ethernet, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, TLS, HTTP, NTP — with verified checksums and every header field explained. Runs locally." />
     <link rel="canonical" href="https://hexbase.dev/tools/packet/" />
+    <meta property="og:title" content="Packet Decoder — decode network protocol hex dumps online" />
+    <meta property="og:description" content="Paste a hex dump and decode the full protocol stack: Ethernet, IPv4/IPv6, TCP, UDP, DNS, TLS, HTTP — with verified checksums and every field explained. Runs locally." />
+    <meta property="og:url" content="https://hexbase.dev/tools/packet/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/packet/#app",
+            "name": "Packet Decoder",
+            "url": "https://hexbase.dev/tools/packet/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online network packet decoder: paste a hex dump from Wireshark, tcpdump or xxd and walk the full protocol stack — Ethernet, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, TLS, HTTP, NTP — with verified checksums, parsed locally in your browser.",
+            "featureList": [
+              "Accepts raw hex, xxd, hexdump -C, Wireshark exports and \\x escapes",
+              "Decodes Ethernet/VLAN, ARP, IPv4, IPv6, TCP with options, UDP, ICMP/ICMPv6, DNS, TLS ClientHello (SNI/ALPN), HTTP, NTP",
+              "Verifies IPv4, TCP, UDP and ICMP checksums including pseudo-headers",
+              "Auto-detects the first layer, or start at any layer manually",
+              "Byte-level highlighting: click a field to see its bytes",
+              "7 built-in sample packets with correct checksums",
+              "Local-first: packet data is parsed in the browser and never uploaded"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "Packet Decoder", "item": "https://hexbase.dev/tools/packet/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What hex dump formats can I paste?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Raw hex strings, xxd output, hexdump -C output, Wireshark's 'Copy … as a Hex Dump', and C-style \\x escapes. Offsets and ASCII gutters are stripped automatically." }
+              },
+              {
+                "@type": "Question",
+                "name": "Which protocols does the decoder understand?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Ethernet II with VLAN tags, ARP, IPv4, IPv6, TCP including options, UDP, ICMP and ICMPv6, DNS with name-compression pointers, TLS ClientHello (including SNI and ALPN), HTTP and NTP." }
+              },
+              {
+                "@type": "Question",
+                "name": "Does it verify checksums?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes — IPv4 header, TCP, UDP and ICMP checksums are recomputed and compared, including the pseudo-header that TCP and UDP borrow from the IP layer. Captures of outgoing traffic often show invalid checksums because the NIC fills them in after the capture point (checksum offload)." }
+              },
+              {
+                "@type": "Question",
+                "name": "My dump doesn't start with an Ethernet header — can I still decode it?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. The decoder auto-detects the first layer, and you can override it with the first-layer selector to start at IPv4, IPv6, TCP, UDP, ARP, a DNS message or a TLS record — useful for captures taken above layer 2, like tcpdump on a tunnel interface." }
+              },
+              {
+                "@type": "Question",
+                "name": "Is it safe to paste production packet captures?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Parsing happens entirely in your browser; the bytes are never transmitted. Only the optional Share button uploads content, and those links expire after 30 days." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!--#include:header-->
@@ -84,6 +153,37 @@
         <p class="dim">
           Wireshark: right-click a packet → Copy → …as a Hex Dump. tcpdump: <code>tcpdump -XX -c 1 port 53</code>.
           Or grab one frame out of a <code>.pcap</code> in the <a href="/tools/hex/">hex inspector</a> and paste it here.
+        </p>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>What hex dump formats can I paste?</h3>
+        <p>
+          Raw hex strings, <code>xxd</code> output, <code>hexdump -C</code> output, Wireshark's <em>Copy … as a Hex
+          Dump</em>, and C-style <code>\x</code> escapes. Offsets and ASCII gutters are stripped automatically.
+        </p>
+        <h3>Which protocols does the decoder understand?</h3>
+        <p>
+          Ethernet II with VLAN tags, ARP, IPv4, IPv6, TCP including options, UDP, ICMP and ICMPv6, DNS with
+          name-compression pointers, TLS ClientHello (including SNI and ALPN), HTTP and NTP.
+        </p>
+        <h3>Does it verify checksums?</h3>
+        <p>
+          Yes — IPv4 header, TCP, UDP and ICMP checksums are recomputed and compared, including the pseudo-header that
+          TCP and UDP borrow from the IP layer. Captures of outgoing traffic often show invalid checksums because the
+          NIC fills them in after the capture point (checksum offload).
+        </p>
+        <h3>My dump doesn't start with an Ethernet header — can I still decode it?</h3>
+        <p>
+          Yes. The decoder auto-detects the first layer, and you can override it with the <em>first layer</em>
+          selector to start at IPv4, IPv6, TCP, UDP, ARP, a DNS message or a TLS record — useful for captures taken
+          above layer 2, like tcpdump on a tunnel interface.
+        </p>
+        <h3>Is it safe to paste production packet captures?</h3>
+        <p>
+          Parsing happens entirely in your browser; the bytes are never transmitted. Only the optional
+          <em>Share</em> button uploads content, and those links expire after 30 days.
         </p>
       </section>
     </main>

@@ -5,6 +5,69 @@
     <title>Hex Inspector — analyze binary file structure online | hexbase.dev</title>
     <meta name="description" content="Drop any file to see its bytes and its structure: magic-byte identification plus full structural parsing of PNG, JPEG, GIF, ZIP, gzip, ELF, PE, Mach-O, SQLite, MP4, WAV, WASM, tar and more — locally in your browser." />
     <link rel="canonical" href="https://hexbase.dev/tools/hex/" />
+    <meta property="og:title" content="Hex Inspector — analyze binary file structure online" />
+    <meta property="og:description" content="Drop any file: hex view, magic-byte identification, and structural parsing of PNG, JPEG, ZIP, ELF, PE, Mach-O, SQLite, MP4, WASM and more — locally in your browser." />
+    <meta property="og:url" content="https://hexbase.dev/tools/hex/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/hex/#app",
+            "name": "Hex Inspector",
+            "url": "https://hexbase.dev/tools/hex/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online hex viewer and binary file analyzer: drop any file to see its bytes, identify it by magic numbers, and walk its structure field by field — parsed locally, never uploaded.",
+            "featureList": [
+              "Hex view with offset navigation and byte inspector",
+              "Magic-byte file type identification",
+              "Structural parsing of PNG, JPEG, GIF, BMP, ZIP, gzip, tar, ELF, PE, Mach-O, Java class, SQLite, MP4, RIFF/WAV, PDF, WASM",
+              "Apple formats: binary plist, DMG, AppleSingle/AppleDouble, xar (.pkg/.xip), icns",
+              "Strings extraction and entropy analysis",
+              "Local-first: files are parsed in the browser and never uploaded"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "Hex Inspector", "item": "https://hexbase.dev/tools/hex/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is my file uploaded when I inspect it?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. The file is read with your browser's File API and parsed by code running in your tab — it never leaves your machine. Only clicking Share uploads content (up to 256 KB), and those links expire after 30 days." }
+              },
+              {
+                "@type": "Question",
+                "name": "Which file formats does the hex inspector understand?",
+                "acceptedAnswer": { "@type": "Answer", "text": "It structurally parses PNG, JPEG, GIF, BMP, ZIP, gzip, tar, ELF, PE/EXE, Mach-O, Java class files, WebAssembly, SQLite, MP4, RIFF/WAV, PDF, and the Apple family: binary plist, DMG, AppleSingle/AppleDouble, xar (.pkg/.xip) and icns. Beyond those, magic-byte detection identifies many more formats by signature, and every file gets the hex view, strings extraction and entropy analysis." }
+              },
+              {
+                "@type": "Question",
+                "name": "How can I identify an unknown file type?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Check its first bytes: most formats open with a fixed signature called a magic number. Drop the file into the inspector and it matches those bytes against known signatures — telling you what the file actually is, regardless of its extension." }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the maximum file size?",
+                "acceptedAnswer": { "@type": "Answer", "text": "64 MB per file. The whole file is held in your tab's memory while you inspect it, so the limit keeps the browser responsive." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!--#include:header-->
@@ -107,6 +170,31 @@
           <strong>trailing indexes</strong> (ZIP, PDF — which is why those formats survive appending). Once you can
           spot the shape, an unfamiliar format stops being noise.
         </p>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>Is my file uploaded when I inspect it?</h3>
+        <p>
+          No. The file is read with your browser's File API and parsed by code running in your tab — it never leaves
+          your machine. Only clicking <em>Share</em> uploads content (up to 256&nbsp;KB), and those links expire after
+          30 days.
+        </p>
+        <h3>Which file formats does the hex inspector understand?</h3>
+        <p>
+          It structurally parses PNG, JPEG, GIF, BMP, ZIP, gzip, tar, ELF, PE/EXE, Mach-O, Java class files,
+          WebAssembly, SQLite, MP4, RIFF/WAV, PDF, and the Apple family: binary plist, DMG, AppleSingle/AppleDouble,
+          xar (.pkg/.xip) and icns. Beyond those, magic-byte detection identifies many more formats by signature, and
+          every file gets the hex view, strings extraction and entropy analysis.
+        </p>
+        <h3>How can I identify an unknown file type?</h3>
+        <p>
+          Check its first bytes: most formats open with a fixed signature called a magic number. Drop the file into
+          the inspector and it matches those bytes against known signatures — telling you what the file actually is,
+          regardless of its extension.
+        </p>
+        <h3>What is the maximum file size?</h3>
+        <p>64&nbsp;MB per file. The whole file is held in your tab's memory while you inspect it, so the limit keeps the browser responsive.</p>
       </section>
     </main>
     <!--#include:footer-->

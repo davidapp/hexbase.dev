@@ -996,6 +996,50 @@ table.kv .dim {
   line-height: 1.6;
 }
 
+.learn h3 {
+  margin: 24px 0 4px;
+  font-size: 0.98rem;
+  color: var(--text-strong);
+}
+.learn h3 + p {
+  margin-top: 4px;
+}
+
+/* ---------------- legal pages (terms / privacy) ---------------- */
+
+.legal {
+  max-width: 78ch;
+  padding-bottom: 20px;
+}
+.legal .updated {
+  font: 0.8rem var(--font-mono);
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+}
+.legal h2 {
+  margin: 32px 0 8px;
+  font-size: 1.02rem;
+}
+.legal h2::before {
+  content: '§ ';
+  color: var(--accent);
+  font-weight: 400;
+}
+.legal p,
+.legal li {
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+.legal ul {
+  padding-left: 1.3rem;
+  margin: 0.6rem 0;
+}
+.legal a {
+  color: var(--accent);
+}
+
 /* ---------------- links page ---------------- */
 
 .links-grid {

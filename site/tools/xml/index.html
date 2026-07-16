@@ -5,6 +5,68 @@
     <title>XML Toolkit — format, validate, XPath tester | hexbase.dev</title>
     <meta name="description" content="Pretty-print, minify and validate XML, run XPath queries against your document, and escape/unescape entities — locally in your browser." />
     <link rel="canonical" href="https://hexbase.dev/tools/xml/" />
+    <meta property="og:title" content="XML Toolkit — format, validate, XPath tester" />
+    <meta property="og:description" content="Pretty-print, minify and validate XML, test XPath expressions against your document, and escape/unescape entities — locally in your browser." />
+    <meta property="og:url" content="https://hexbase.dev/tools/xml/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/xml/#app",
+            "name": "XML Toolkit",
+            "url": "https://hexbase.dev/tools/xml/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online XML formatter, validator and XPath tester: pretty-print or minify, check well-formedness with the browser's real XML parser, run XPath 1.0 queries, and escape or unescape entities — all locally.",
+            "featureList": [
+              "Pretty-print and minify XML",
+              "Well-formedness validation via the browser's native XML parser",
+              "XPath 1.0 tester with node, string, number and boolean results",
+              "Entity escape and unescape",
+              "Local-first: your XML is processed in the browser and never uploaded"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "XML Toolkit", "item": "https://hexbase.dev/tools/xml/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is the difference between well-formed and valid XML?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Well-formed means the syntax is right: every tag closed, one root element, attributes quoted, special characters escaped. Valid additionally means the document obeys a schema such as a DTD or XSD. This tool checks well-formedness, using the browser's own XML parser — so what passes here parses everywhere." }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I test an XPath expression online?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Paste your XML, type an expression like //book[@lang=\"en\"]/title and run it. Matching nodes are listed — or the computed value, since XPath expressions can also return strings, numbers and booleans (try count(//book)). The tool uses the browser's native XPath 1.0 engine." }
+              },
+              {
+                "@type": "Question",
+                "name": "Why does my XML fail with an undefined entity error?",
+                "acceptedAnswer": { "@type": "Answer", "text": "HTML habits: entities like &nbsp; and &copy; are not part of XML. Only &amp;, &lt;, &gt;, &quot; and &apos; are predefined. Use numeric character references such as &#160; instead, or declare the entity in a DTD." }
+              },
+              {
+                "@type": "Question",
+                "name": "Is my XML uploaded anywhere?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No — formatting, validation and XPath evaluation all run locally in your browser. Only the optional Share button uploads content, and those links expire after 30 days." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!--#include:header-->
@@ -92,6 +154,34 @@
           <code>&lt;![CDATA[ raw &lt;text&gt; &amp; symbols ]]&gt;</code> tells the parser "don't interpret any of
           this" — handy for embedded code or markup samples. The only thing it can't contain is the terminator
           <code>]]&gt;</code> itself.
+        </p>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>What is the difference between well-formed and valid XML?</h3>
+        <p>
+          Well-formed means the syntax is right: every tag closed, one root element, attributes quoted, special
+          characters escaped. Valid additionally means the document obeys a schema such as a DTD or XSD. This tool
+          checks well-formedness, using the browser's own XML parser — so what passes here parses everywhere.
+        </p>
+        <h3>How do I test an XPath expression online?</h3>
+        <p>
+          Paste your XML, type an expression like <code>//book[@lang="en"]/title</code> and run it. Matching nodes are
+          listed — or the computed value, since XPath expressions can also return strings, numbers and booleans (try
+          <code>count(//book)</code>). The tool uses the browser's native XPath 1.0 engine.
+        </p>
+        <h3>Why does my XML fail with an undefined entity error?</h3>
+        <p>
+          HTML habits: entities like <code>&amp;nbsp;</code> and <code>&amp;copy;</code> are not part of XML. Only
+          <code>&amp;amp;</code>, <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;quot;</code> and
+          <code>&amp;apos;</code> are predefined. Use numeric character references such as <code>&amp;#160;</code>
+          instead, or declare the entity in a DTD.
+        </p>
+        <h3>Is my XML uploaded anywhere?</h3>
+        <p>
+          No — formatting, validation and XPath evaluation all run locally in your browser. Only the optional
+          <em>Share</em> button uploads content, and those links expire after 30 days.
         </p>
       </section>
     </main>

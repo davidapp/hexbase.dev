@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Privacy Policy | hexbase.dev</title>
+    <meta name="description" content="hexbase.dev privacy policy: no accounts, no cookies, no analytics, no trackers. Tools run locally in your browser; only the optional share feature ever uploads data, and shares are deleted after 30 days." />
+    <link rel="canonical" href="https://hexbase.dev/privacy/" />
+    <meta property="og:title" content="Privacy Policy | hexbase.dev" />
+    <meta property="og:description" content="No accounts, no cookies, no analytics. Tools run locally; only the optional share feature uploads data, deleted after 30 days." />
+    <meta property="og:url" content="https://hexbase.dev/privacy/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Privacy Policy",
+        "url": "https://hexbase.dev/privacy/",
+        "description": "Privacy policy for hexbase.dev: no accounts, no cookies, no analytics; local-first processing; optional shares deleted after 30 days.",
+        "isPartOf": { "@type": "WebSite", "@id": "https://hexbase.dev/#website", "url": "https://hexbase.dev/", "name": "hexbase.dev" },
+        "datePublished": "2026-07-17",
+        "dateModified": "2026-07-17"
+      }
+    </script>
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container">
+      <div class="page-head">
+        <h1>Privacy Policy</h1>
+        <p class="sub">
+          The short version: we designed hexbase.dev so there is almost nothing to write a privacy policy about. No
+          accounts, no cookies, no analytics, no ads. Your files are processed in your browser and never reach us —
+          unless you explicitly click <em>Share</em>.
+        </p>
+      </div>
+
+      <article class="legal">
+        <p class="updated">Effective date: July 17, 2026 · Contact: <a href="mailto:support@hexbase.dev">support@hexbase.dev</a></p>
+
+        <h2>1. What happens in your browser, stays in your browser</h2>
+        <p>
+          Every tool on this site — the hex inspector, packet decoder, JSON and XML toolkits, timestamp converter and
+          encoders — runs entirely in your browser tab as client-side code. Files you drop, tokens you paste and
+          packet dumps you decode are read and parsed on your own machine. They are <strong>not uploaded, logged or
+          seen by us</strong>. You can verify this in your browser's network inspector: using the tools generates no
+          requests carrying your data.
+        </p>
+        <p>
+          Your theme preference (dark or light) is kept in your browser's <code>localStorage</code> under the key
+          <code>hexbase-theme</code>. It never leaves your device and can be cleared like any site data.
+        </p>
+
+        <h2>2. The one exception: share links</h2>
+        <p>
+          Clicking <em>Share</em> uploads the current content so we can serve it as a short link. This is always an
+          explicit action — nothing is shared automatically. When you create a share we store:
+        </p>
+        <ul>
+          <li>the content itself (up to 256&nbsp;KB), in object storage on Cloudflare R2;</li>
+          <li>metadata: the share code, which tool it came from, the filename if one was provided, the content size,
+            and the creation and expiry timestamps — in a Cloudflare D1 database.</li>
+        </ul>
+        <p>
+          Shares are <strong>not linked to you</strong> — we store no account, IP address or other identifier with
+          them. Anyone who has the link can view the content, so don't share secrets. Every share expires after
+          <strong>30 days</strong> and is permanently deleted by a nightly cleanup job. Want one gone sooner? Email
+          the link to <a href="mailto:support@hexbase.dev">support@hexbase.dev</a> and we'll remove it.
+        </p>
+
+        <h2>3. Rate limiting without storing your IP</h2>
+        <p>
+          To keep the share feature free of abuse we count shares per client per hour. The counter key is a salted
+          SHA-256 hash of your IP address combined with the current hour — the raw IP address is never written to
+          storage, the hash cannot practically be reversed, and the counter itself expires within an hour.
+        </p>
+
+        <h2>4. Hosting and server logs</h2>
+        <p>
+          The site runs on <a href="https://www.cloudflare.com/" rel="noopener">Cloudflare</a> Workers. Like any host,
+          Cloudflare processes connection data (such as IP addresses and request headers) transiently to route
+          traffic, terminate TLS and protect against attacks; see
+          <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">Cloudflare's privacy policy</a>. We keep
+          short-lived operational logs for debugging — error entries record the request path and error message, not
+          who you are.
+        </p>
+
+        <h2>5. Cookies: none</h2>
+        <p>
+          The site sets no cookies — first-party or third-party. That's why there is no cookie banner: there is
+          nothing to consent to.
+        </p>
+
+        <h2>6. No analytics, no third parties</h2>
+        <p>
+          There are no analytics scripts, advertising networks, tracking pixels, external fonts or third-party CDNs
+          on this site. Every asset is served from hexbase.dev. The <a href="/links/">developer links</a> directory
+          points to external sites; once you follow a link, that site's own privacy policy applies.
+        </p>
+
+        <h2>7. Your rights</h2>
+        <p>
+          Because we don't collect personal data through normal use of the site, there is usually nothing for us to
+          access, correct, export or delete. If you believe a share link contains personal data about you — or you
+          have any privacy question or complaint — email
+          <a href="mailto:support@hexbase.dev">support@hexbase.dev</a> and we will respond as quickly as we can,
+          within the timelines required by the data-protection law that applies to you (such as the GDPR or CCPA).
+        </p>
+
+        <h2>8. Children</h2>
+        <p>
+          The site is a general-audience developer tool and does not knowingly collect personal information from
+          anyone, including children.
+        </p>
+
+        <h2>9. Changes to this policy</h2>
+        <p>
+          If we ever add a feature that changes what data we handle, we will update this policy and its effective
+          date before the feature ships. The current version always lives at
+          <a href="/privacy/">hexbase.dev/privacy</a>.
+        </p>
+
+        <h2>10. Contact</h2>
+        <p>
+          Privacy questions, removal requests, or anything else:
+          <a href="mailto:support@hexbase.dev">support@hexbase.dev</a>.
+        </p>
+      </article>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/legal.ts"></script>
+  </body>
+</html>

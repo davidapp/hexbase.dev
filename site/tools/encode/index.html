@@ -5,6 +5,71 @@
     <title>Encode / Decode — Base64, URL, HTML, hex, Unicode, JWT, hashes | hexbase.dev</title>
     <meta name="description" content="Encode and decode Base64, URL percent-encoding, HTML entities, hex, binary and Unicode escapes; decode JWTs with claim explanations; compute MD5/SHA hashes; inspect strings code point by code point. Runs locally." />
     <link rel="canonical" href="https://hexbase.dev/tools/encode/" />
+    <meta property="og:title" content="Encode / Decode — Base64, URL, HTML, hex, Unicode, JWT, hashes" />
+    <meta property="og:description" content="Encode and decode Base64, URL, HTML entities, hex, binary and Unicode escapes; decode JWTs with claim explanations; compute MD5/SHA hashes. Runs locally — tokens never leave your browser." />
+    <meta property="og:url" content="https://hexbase.dev/tools/encode/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/encode/#app",
+            "name": "Encode / Decode",
+            "url": "https://hexbase.dev/tools/encode/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online encoder and decoder: Base64 and Base64URL, URL percent-encoding, HTML entities, hex and binary, Unicode escapes with a per-character inspector, JWT decoding with claim explanations and local HS256 verification, and MD5/SHA-1/SHA-256/384/512 hashes — all in your browser.",
+            "featureList": [
+              "Base64 and URL-safe Base64 encode/decode",
+              "URL percent-encoding in component and whole-URI modes",
+              "HTML entity escape/unescape",
+              "Hex and binary conversions",
+              "Unicode escapes with a per-code-point character inspector",
+              "JWT decoding with claim explanations and local HS256 verification",
+              "MD5, SHA-1, SHA-256, SHA-384 and SHA-512 digests",
+              "Local-first: tokens and secrets never leave the browser"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "Encode / Decode", "item": "https://hexbase.dev/tools/encode/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is it safe to paste a JWT or API token here?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Decoding happens entirely in your browser — the token is never transmitted. Even HS256 signature verification runs locally using the WebCrypto API. Still, treat live production credentials with the care they deserve anywhere." }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the difference between Base64 and Base64URL?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Base64URL replaces + and / with - and _ and usually drops the = padding, so values survive unmodified inside URLs and filenames. JWTs use Base64URL. This tool handles both — tick 'URL-safe' to switch." }
+              },
+              {
+                "@type": "Question",
+                "name": "Why is Base64 output larger than the input?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Base64 re-expresses every 3 bytes as 4 characters of 6 bits each, so output is exactly 4/3 the input size — 33% growth — plus up to two = padding characters." }
+              },
+              {
+                "@type": "Question",
+                "name": "Are MD5 and SHA-1 still safe to use?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Not for security: both have practical collision attacks (SHA-1 publicly since 2017's SHAttered). They remain fine for non-adversarial checksums and legacy interop, which is why this tool still computes them. For anything security-related use SHA-256 or stronger." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!--#include:header-->
@@ -211,6 +276,33 @@
           decoding it (what this tool does) requires no key. The signature only proves who issued it and that it
           wasn't modified. Never put secrets in claims; always validate <code>exp</code>, <code>aud</code> and
           <code>iss</code> server-side; and reject <code>"alg": "none"</code>.
+        </p>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>Is it safe to paste a JWT or API token here?</h3>
+        <p>
+          Decoding happens entirely in your browser — the token is never transmitted. Even HS256 signature
+          verification runs locally using the WebCrypto API. Still, treat live production credentials with the care
+          they deserve anywhere.
+        </p>
+        <h3>What is the difference between Base64 and Base64URL?</h3>
+        <p>
+          Base64URL replaces <code>+</code> and <code>/</code> with <code>-</code> and <code>_</code> and usually
+          drops the <code>=</code> padding, so values survive unmodified inside URLs and filenames. JWTs use
+          Base64URL. This tool handles both — tick <em>URL-safe</em> to switch.
+        </p>
+        <h3>Why is Base64 output larger than the input?</h3>
+        <p>
+          Base64 re-expresses every 3 bytes as 4 characters of 6 bits each, so output is exactly 4/3 the input size —
+          33% growth — plus up to two <code>=</code> padding characters.
+        </p>
+        <h3>Are MD5 and SHA-1 still safe to use?</h3>
+        <p>
+          Not for security: both have practical collision attacks (SHA-1 publicly since 2017's SHAttered). They remain
+          fine for non-adversarial checksums and legacy interop, which is why this tool still computes them. For
+          anything security-related use SHA-256 or stronger.
         </p>
       </section>
     </main>
