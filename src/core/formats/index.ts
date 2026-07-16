@@ -17,6 +17,11 @@ import { wasm } from './wasm'
 import { tar } from './tar'
 import { macho } from './macho'
 import { jvmClass } from './jvm'
+import { bplist } from './bplist'
+import { dmg } from './dmg'
+import { appleFork } from './applefork'
+import { xar } from './xar'
+import { icns } from './icns'
 
 export type { FormatDef } from './def'
 
@@ -61,9 +66,13 @@ const STUBS: FormatDef[] = [
   stub('pcap-be', 'pcap capture (big-endian)', [0xa1, 0xb2, 0xc3, 0xd4], 'Big-endian pcap magic.'),
   stub('pcapng', 'pcapng capture', [0x0a, 0x0d, 0x0d, 0x0a], 'pcapng Section Header Block. Try extracting one frame and pasting it into the Packet Decoder →'),
   stub('ico', 'Windows icon', [0x00, 0x00, 0x01, 0x00], 'ICO header — a directory of BMP/PNG images at multiple sizes.'),
+  stub('bom', 'macOS Bill of Materials', sigOf('BOMStore'), '"BOMStore" — the Bom files inside .pkg installers: every path, mode and checksum the package installs. Inspect with lsbom.'),
+  stub('dyldcache', 'dyld shared cache', sigOf('dyld_v1'), '"dyld_v1" — the prelinked blob of every system dylib on macOS/iOS. Why /usr/lib/libSystem.dylib does not exist on disk anymore.'),
 ]
 
-/** Ordered registry — most specific magics first; weak 2-byte magics (MZ, BM) last. */
+/** Ordered registry — most specific magics first; weak 2-byte magics (MZ, BM) last.
+ *  dmg (trailer-identified) must precede the compression stubs: a .dmg body can
+ *  start with what looks like a bzip2/zlib stream. */
 export const FORMATS: FormatDef[] = [
   png,
   jpeg,
@@ -75,10 +84,15 @@ export const FORMATS: FormatDef[] = [
   wasm,
   sqlite,
   pdf,
+  bplist,
+  icns,
+  xar,
+  appleFork,
   zip,
   mp4,
   riff,
   tar,
+  dmg,
   ...STUBS,
   bmp,
   pe,

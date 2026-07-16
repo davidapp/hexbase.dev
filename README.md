@@ -8,7 +8,7 @@ Built for Cloudflare Workers with D1, R2 and KV.
 
 | Tool | Path | What it does |
 | --- | --- | --- |
-| Hex Inspector | `/tools/hex/` | Drop any file: hex view, magic-byte identification, structural parsing of PNG, JPEG, GIF, ZIP, gzip, ELF, PE, Mach-O, Java class, SQLite, MP4, RIFF/WAV, BMP, PDF, WASM, tar (+17 detect-only magics), strings extraction, entropy |
+| Hex Inspector | `/tools/hex/` | Drop any file: hex view, magic-byte identification, structural parsing of PNG, JPEG, GIF, ZIP, gzip, ELF, PE, Mach-O, Java class, SQLite, MP4, RIFF/WAV, BMP, PDF, WASM, tar, and the macOS family — binary plist (full object graph), DMG (koly trailer), AppleSingle/AppleDouble, xar (.pkg/.xip), icns (+19 detect-only magics incl. BOM and dyld cache); strings extraction, entropy |
 | Packet Decoder | `/tools/packet/` | Paste a hex dump (raw, xxd, hexdump -C, Wireshark) → Ethernet/VLAN, ARP, IPv4/IPv6, TCP (with options), UDP, ICMP/ICMPv6, DNS (name decompression), TLS (SNI/ALPN), HTTP, NTP. Verifies IPv4/TCP/UDP/ICMP checksums. 7 built-in sample packets, generated with correct checksums |
 | JSON Toolkit | `/tools/json/` | Format / minify / sort keys, validation with exact line:column and human explanations, tree view with path copy, stats, JSON → TypeScript interfaces |
 | XML Toolkit | `/tools/xml/` | Pretty-print / minify, DOMParser validation, XPath tester, entity escape/unescape |

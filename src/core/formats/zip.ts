@@ -37,6 +37,7 @@ function sniffSubtype(names: string[]): string | null {
     return 'Office Open XML document'
   }
   if (names.includes('AndroidManifest.xml')) return 'Android package (.apk)'
+  if (names.some((n) => /^Payload\/[^/]+\.app\//.test(n))) return 'iOS app archive (.ipa)'
   if (names.includes('META-INF/MANIFEST.MF')) return 'Java archive (.jar)'
   if (names.includes('mimetype')) return 'EPUB or OpenDocument'
   return null

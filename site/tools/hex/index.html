@@ -19,7 +19,7 @@
 
       <label class="dropzone" id="drop">
         <strong>Drop a file here</strong> or click to choose one
-        <div style="font-size: 0.8rem; margin-top: 6px">PNG · JPEG · GIF · ZIP · gzip · ELF · PE · Mach-O · SQLite · MP4 · WAV · BMP · PDF · WASM · tar · class …</div>
+        <div style="font-size: 0.8rem; margin-top: 6px">PNG · JPEG · GIF · ZIP · gzip · ELF · PE · Mach-O · binary plist · DMG · icns · xar/pkg · AppleDouble · SQLite · MP4 · WAV · BMP · PDF · WASM · tar · class …</div>
         <input type="file" id="file" />
       </label>
       <div class="btn-row" style="margin-top: 10px">
@@ -77,12 +77,18 @@
             <tr><td>53 51 4C 69 74 65</td><td>SQLite</td><td>SQLite database ("SQLite format 3\0")</td></tr>
             <tr><td>1F 8B</td><td>..</td><td>gzip</td></tr>
             <tr><td>00 61 73 6D</td><td>.asm</td><td>WebAssembly ("\0asm")</td></tr>
+            <tr><td>62 70 6C 69 73 74 30 30</td><td>bplist00</td><td>Apple binary property list (Info.plist, defaults, iOS backups)</td></tr>
+            <tr><td>78 61 72 21</td><td>xar!</td><td>xar archive — macOS .pkg installers and .xip</td></tr>
+            <tr><td>00 05 16 07</td><td>....</td><td>AppleDouble — the hidden "._" files on USB sticks</td></tr>
+            <tr><td>6B 6F 6C 79 <span class="dim">(at EOF−512)</span></td><td>koly</td><td>Apple .dmg disk image — identified by its <em>trailer</em>, not its head</td></tr>
           </tbody>
         </table>
         <p class="dim">
           Fun collision: Java's <code>CAFEBABE</code> and Apple's fat-binary magic are the same four bytes — decoders
           disambiguate by whether the next field looks like a tiny architecture count or a class-file version. This
-          inspector does exactly that.
+          inspector does exactly that. And not every format signs its first bytes: a .dmg is recognized by the 512-byte
+          "koly" block at the <em>end</em> of the file, ZIP by its end-of-directory record — some files you identify by
+          how they finish, not how they start.
         </p>
 
         <h2>Endianness: which end comes first</h2>
