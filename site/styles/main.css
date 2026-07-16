@@ -778,6 +778,58 @@ table.kv .dim {
     padding-right: 0;
   }
 }
+.demo-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.demo-chip:hover {
+  border-color: var(--accent);
+}
+.demo-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 0.78rem/1 var(--font-mono);
+  color: var(--text);
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.demo-open:hover {
+  color: var(--text-strong);
+  background: var(--accent-dim);
+}
+.demo-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: contain;
+  /* checkerboard so alpha channels are visible */
+  background: repeating-conic-gradient(var(--border) 0% 25%, transparent 0% 50%) 0 0 / 10px 10px;
+}
+.demo-dl {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 9px;
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font: 0.82rem/1 var(--font-mono);
+}
+.demo-dl:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+  text-decoration: none;
+}
+.demo-audio {
+  height: 30px;
+  max-width: 240px;
+  vertical-align: middle;
+}
 
 /* ---------------- home ---------------- */
 

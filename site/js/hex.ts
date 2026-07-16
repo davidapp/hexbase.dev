@@ -110,15 +110,67 @@ async function openDemo(demo: DemoFile, updateUrl = true): Promise<void> {
   }
 }
 
+/** icns has no native <img> support — extract the first embedded PNG entry
+ *  from the file itself (they are literally PNGs wearing an OSType tag). */
+async function icnsThumb(img: HTMLImageElement, demo: DemoFile): Promise<void> {
+  try {
+    const res = await fetch(`/demo/${demo.file}`)
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    let pos = 8
+    while (pos + 8 <= bytes.length) {
+      const len = ((bytes[pos + 4] << 24) | (bytes[pos + 5] << 16) | (bytes[pos + 6] << 8) | bytes[pos + 7]) >>> 0
+      if (len < 8) break
+      const d = pos + 8
+      if (bytes[d] === 0x89 && bytes[d + 1] === 0x50 && bytes[d + 2] === 0x4e && bytes[d + 3] === 0x47) {
+        img.src = URL.createObjectURL(new Blob([bytes.slice(d, pos + len)], { type: 'image/png' }))
+        return
+      }
+      pos += len
+    }
+  } catch {
+    /* keep the placeholder */
+  }
+}
+
+function demoChip(demo: DemoFile): HTMLElement {
+  const chip = el('span', 'demo-chip')
+
+  const open = el('button', 'demo-open')
+  if (demo.kind === 'image') {
+    const img = el('img', 'demo-thumb') as HTMLImageElement
+    img.alt = `${demo.label} preview`
+    img.loading = 'lazy'
+    if (demo.file.endsWith('.icns')) void icnsThumb(img, demo)
+    else img.src = `/demo/${demo.file}`
+    open.append(img)
+  }
+  open.append(document.createTextNode(demo.label))
+  open.title = `${demo.desc}\n\nClick to open in the inspector.`
+  open.addEventListener('click', () => void openDemo(demo))
+  chip.append(open)
+
+  const dl = el('a', 'demo-dl', '↓') as HTMLAnchorElement
+  dl.href = `/demo/${demo.file}`
+  dl.setAttribute('download', demo.file)
+  dl.title = `download ${demo.file}`
+  chip.append(dl)
+  return chip
+}
+
 const demosBox = $('#demos')
 for (const { group, items } of DEMO_GROUPS) {
   const row = el('div', 'demo-row')
   row.append(el('span', 'demo-group', group))
   for (const demo of items) {
-    const btn = el('button', 'btn small', demo.label)
-    btn.title = demo.desc
-    btn.addEventListener('click', () => void openDemo(demo))
-    row.append(btn)
+    row.append(demoChip(demo))
+    if (demo.kind === 'audio') {
+      const audio = el('audio', 'demo-audio') as HTMLAudioElement
+      audio.controls = true
+      audio.preload = 'none'
+      audio.src = `/demo/${demo.file}`
+      audio.title = `${demo.file} — the same bytes the inspector shows you`
+      row.append(audio)
+    }
   }
   demosBox.append(row)
 }
