@@ -748,6 +748,37 @@ table.kv .dim {
   display: none;
 }
 
+/* ---------------- demo gallery ---------------- */
+
+.demo-gallery {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.demo-group {
+  font: 600 0.7rem var(--font-mono);
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  width: 96px;
+  flex: none;
+  text-align: right;
+  padding-right: 6px;
+}
+@media (max-width: 640px) {
+  .demo-group {
+    width: 100%;
+    text-align: left;
+    padding-right: 0;
+  }
+}
+
 /* ---------------- home ---------------- */
 
 .hero {

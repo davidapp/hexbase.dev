@@ -1,6 +1,7 @@
-import { crc32, entropy, extractStrings, formatSize, hex } from '@core/bytes'
+import { entropy, extractStrings, formatSize, hex } from '@core/bytes'
 import { detectFormat } from '@core/formats/index'
 import type { ParseResult } from '@core/region'
+import { ALL_DEMOS, DEMO_GROUPS, type DemoFile } from './demos'
 import { $, bindShare, el, HexView, initChrome, initTabs, loadShare, RegionTree, renderResultHead, shareParam, showMsg, toast } from './ui'
 
 initChrome()
@@ -94,81 +95,48 @@ fileInput.addEventListener('change', () => {
   if (fileInput.files?.[0]) handleFile(fileInput.files[0])
 })
 
-// ---------------------------------------------------------------- samples
+// ---------------------------------------------------------------- demo gallery
+// Real, representative files (see scripts/make-demos.mjs) served from /demo/.
 
-const ascii = (s: string): number[] => [...s].map((c) => c.charCodeAt(0))
-const u32be = (v: number): number[] => [(v >>> 24) & 0xff, (v >>> 16) & 0xff, (v >>> 8) & 0xff, v & 0xff]
-const u16le = (v: number): number[] => [v & 0xff, (v >> 8) & 0xff]
-const u32le = (v: number): number[] => [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, (v >>> 24) & 0xff]
-
-function cat(...parts: (number[] | Uint8Array)[]): Uint8Array {
-  const arrays = parts.map((p) => (p instanceof Uint8Array ? p : new Uint8Array(p)))
-  const out = new Uint8Array(arrays.reduce((n, a) => n + a.length, 0))
-  let off = 0
-  for (const a of arrays) {
-    out.set(a, off)
-    off += a.length
+async function openDemo(demo: DemoFile, updateUrl = true): Promise<void> {
+  try {
+    const res = await fetch(`/demo/${demo.file}`)
+    if (!res.ok) throw new Error(`could not load demo (${res.status})`)
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    analyze(bytes, demo.file)
+    if (updateUrl) history.replaceState(null, '', `?demo=${demo.id}`)
+  } catch (e) {
+    showMsg(msg, 'err', e instanceof Error ? e.message : 'failed to load demo')
   }
-  return out
 }
 
-function pngChunk(type: string, data: number[]): Uint8Array {
-  const td = cat(ascii(type), data)
-  return cat(u32be(data.length), td, u32be(crc32(td)))
+const demosBox = $('#demos')
+for (const { group, items } of DEMO_GROUPS) {
+  const row = el('div', 'demo-row')
+  row.append(el('span', 'demo-group', group))
+  for (const demo of items) {
+    const btn = el('button', 'btn small', demo.label)
+    btn.title = demo.desc
+    btn.addEventListener('click', () => void openDemo(demo))
+    row.append(btn)
+  }
+  demosBox.append(row)
 }
 
-function samplePng(): Uint8Array {
-  return cat(
-    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
-    pngChunk('IHDR', [...u32be(320), ...u32be(240), 8, 6, 0, 0, 0]),
-    pngChunk('tEXt', [...ascii('Software'), 0, ...ascii('hexbase.dev sample')]),
-    pngChunk('pHYs', [...u32be(2835), ...u32be(2835), 1]),
-    pngChunk('IDAT', [0x78, 0x9c, 0x63, 0x64, 0x60, 0x60, 0x60, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x01]),
-    pngChunk('IEND', []),
-  )
-}
-
-function sampleZip(): Uint8Array {
-  const name = ascii('hello/readme.txt')
-  const data = ascii('Every ZIP is read from the end first.\n')
-  const crc = crc32(new Uint8Array(data))
-  const lfh = cat([0x50, 0x4b, 0x03, 0x04], u16le(20), u16le(0), u16le(0), u16le(0x6c22), u16le(0x5901), u32le(crc), u32le(data.length), u32le(data.length), u16le(name.length), u16le(0), name, data)
-  const cd = cat(
-    [0x50, 0x4b, 0x01, 0x02],
-    u16le(20), u16le(20), u16le(0), u16le(0), u16le(0x6c22), u16le(0x5901),
-    u32le(crc), u32le(data.length), u32le(data.length),
-    u16le(name.length), u16le(0), u16le(0), u16le(0), u16le(0), u32le(0), u32le(0),
-    name,
-  )
-  const eocd = cat([0x50, 0x4b, 0x05, 0x06], u16le(0), u16le(0), u16le(1), u16le(1), u32le(cd.length), u32le(lfh.length), u16le(0))
-  return cat(lfh, cd, eocd)
-}
-
-function sampleGzip(): Uint8Array {
-  return cat(
-    [0x1f, 0x8b, 8, 8],
-    u32le(1721088000), // mtime: 2024-07-16
-    [0, 3],
-    ascii('notes.txt'), [0],
-    [0x4b, 0xad, 0x02, 0x00], // (not real deflate — structure demo)
-    u32le(0x9ae62c1e), u32le(42),
-  )
-}
-
-$('#sample-png').addEventListener('click', () => analyze(samplePng(), 'sample.png'))
-$('#sample-zip').addEventListener('click', () => analyze(sampleZip(), 'sample.zip'))
-$('#sample-gzip').addEventListener('click', () => analyze(sampleGzip(), 'notes.txt.gz'))
-
-// ---------------------------------------------------------------- share
+// ---------------------------------------------------------------- share + deep links
 
 bindShare($('#share'), 'hex', () => (current ? { bytes: current.bytes, filename: current.name } : null))
 
-const code = shareParam()
-if (code) {
-  loadShare(code)
+const shareCode = shareParam()
+const demoParam = new URLSearchParams(location.search).get('demo')
+if (shareCode) {
+  loadShare(shareCode)
     .then(({ bytes, filename }) => {
       analyze(bytes, filename ?? 'shared.bin')
       toast('Loaded shared file')
     })
     .catch((e) => showMsg(msg, 'err', e instanceof Error ? e.message : 'failed to load share'))
+} else if (demoParam) {
+  const demo = ALL_DEMOS.find((d) => d.id === demoParam)
+  if (demo) void openDemo(demo, false)
 }

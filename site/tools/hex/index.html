@@ -22,14 +22,12 @@
         <div style="font-size: 0.8rem; margin-top: 6px">PNG · JPEG · GIF · ZIP · gzip · ELF · PE · Mach-O · binary plist · DMG · icns · xar/pkg · AppleDouble · SQLite · MP4 · WAV · BMP · PDF · WASM · tar · class …</div>
         <input type="file" id="file" />
       </label>
-      <div class="btn-row" style="margin-top: 10px">
-        <span style="font: 0.78rem var(--font-mono); color: var(--muted)">no file handy? try:</span>
-        <button class="btn small" id="sample-png">sample PNG</button>
-        <button class="btn small" id="sample-zip">sample ZIP</button>
-        <button class="btn small" id="sample-gzip">sample gzip</button>
+      <div class="btn-row" style="margin-top: 12px">
+        <span style="font: 0.78rem var(--font-mono); color: var(--muted)">no file handy? open a demo — each one is a real, representative specimen (hover for what to look for):</span>
         <span class="spacer" style="flex: 1"></span>
         <button class="btn small" id="share" title="Upload this file (≤256 KB) and get a 30-day link">share</button>
       </div>
+      <div id="demos" class="demo-gallery"></div>
 
       <div class="msg hidden" id="hex-msg"></div>
 
