@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Hex Inspector — analyze binary file structure online | hexbase.dev</title>
+    <meta name="description" content="Drop any file to see its bytes and its structure: magic-byte identification plus full structural parsing of PNG, JPEG, GIF, ZIP, gzip, ELF, PE, Mach-O, SQLite, MP4, WAV, WASM, tar and more — locally in your browser." />
+    <link rel="canonical" href="https://hexbase.dev/tools/hex/" />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container wide">
+      <div class="page-head">
+        <h1>Hex Inspector</h1>
+        <p class="sub">
+          Every file format starts with a promise about what follows. Drop a file to read its bytes, identify it by
+          magic numbers, and walk its structure field by field. Files are parsed locally — nothing is uploaded.
+        </p>
+      </div>
+
+      <label class="dropzone" id="drop">
+        <strong>Drop a file here</strong> or click to choose one
+        <div style="font-size: 0.8rem; margin-top: 6px">PNG · JPEG · GIF · ZIP · gzip · ELF · PE · Mach-O · SQLite · MP4 · WAV · BMP · PDF · WASM · tar · class …</div>
+        <input type="file" id="file" />
+      </label>
+      <div class="btn-row" style="margin-top: 10px">
+        <span style="font: 0.78rem var(--font-mono); color: var(--muted)">no file handy? try:</span>
+        <button class="btn small" id="sample-png">sample PNG</button>
+        <button class="btn small" id="sample-zip">sample ZIP</button>
+        <button class="btn small" id="sample-gzip">sample gzip</button>
+        <span class="spacer" style="flex: 1"></span>
+        <button class="btn small" id="share" title="Upload this file (≤256 KB) and get a 30-day link">share</button>
+      </div>
+
+      <div class="msg hidden" id="hex-msg"></div>
+
+      <section id="result" class="hidden" style="margin-top: 18px">
+        <div class="card" id="summary" style="margin-bottom: 16px"></div>
+        <div class="tool-grid thirds">
+          <div>
+            <div class="pane-title"><span>bytes</span><span id="fileinfo"></span></div>
+            <div id="hexview"></div>
+          </div>
+          <div>
+            <div class="tabs" id="right-tabs">
+              <button data-tab="structure">structure</button>
+              <button data-tab="strings">strings</button>
+            </div>
+            <div data-panel="structure">
+              <div class="tree" id="tree"></div>
+              <div class="tnote" id="note"></div>
+            </div>
+            <div data-panel="strings">
+              <div class="tree" id="strings" style="max-height: 560px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="learn">
+        <h2>Magic numbers: files that introduce themselves</h2>
+        <p>
+          Most binary formats begin with a fixed byte sequence — a <em>magic number</em> — so software can identify the
+          content without trusting the file extension. The Unix <code>file</code> command has worked this way since
+          1973. Rename <code>cat.png</code> to <code>cat.zip</code> and the bytes still say
+          <code>89 50 4E 47</code>: it's a PNG.
+        </p>
+        <table>
+          <thead><tr><th>First bytes</th><th>ASCII</th><th>Format</th></tr></thead>
+          <tbody>
+            <tr><td>89 50 4E 47 0D 0A 1A 0A</td><td>.PNG....</td><td>PNG — the extra bytes detect transfer corruption</td></tr>
+            <tr><td>FF D8 FF</td><td>...</td><td>JPEG (SOI marker + next marker's FF)</td></tr>
+            <tr><td>50 4B 03 04</td><td>PK..</td><td>ZIP — also DOCX, XLSX, JAR, APK, EPUB</td></tr>
+            <tr><td>7F 45 4C 46</td><td>.ELF</td><td>Linux/Unix executables and libraries</td></tr>
+            <tr><td>4D 5A</td><td>MZ</td><td>Windows executables (Mark Zbikowski's initials)</td></tr>
+            <tr><td>CF FA ED FE</td><td>....</td><td>Mach-O 64-bit (macOS/iOS binaries)</td></tr>
+            <tr><td>CA FE BA BE</td><td>....</td><td>Java class files <em>and</em> Mach-O universal binaries</td></tr>
+            <tr><td>53 51 4C 69 74 65</td><td>SQLite</td><td>SQLite database ("SQLite format 3\0")</td></tr>
+            <tr><td>1F 8B</td><td>..</td><td>gzip</td></tr>
+            <tr><td>00 61 73 6D</td><td>.asm</td><td>WebAssembly ("\0asm")</td></tr>
+          </tbody>
+        </table>
+        <p class="dim">
+          Fun collision: Java's <code>CAFEBABE</code> and Apple's fat-binary magic are the same four bytes — decoders
+          disambiguate by whether the next field looks like a tiny architecture count or a class-file version. This
+          inspector does exactly that.
+        </p>
+
+        <h2>Endianness: which end comes first</h2>
+        <p>
+          A multi-byte number like <code>0x12345678</code> can be stored <em>big-endian</em> (<code>12 34 56 78</code>,
+          most significant byte first — network protocols, PNG, Java class files) or <em>little-endian</em>
+          (<code>78 56 34 12</code> — x86/ARM memory, ZIP, GIF, BMP, most Microsoft formats). The names come from
+          <em>Gulliver's Travels</em>, chosen in a 1980 note by Danny Cohen — a joke about which end of a boiled egg to
+          crack. When a number in a dump looks absurd (a 4 GB length in a 2 KB file), you're probably reading it with
+          the wrong endianness.
+        </p>
+
+        <h2>Structure over soup</h2>
+        <p>
+          Binary formats are built from a handful of recurring shapes: <strong>fixed headers</strong> (SQLite's 100-byte
+          header), <strong>length-prefixed chunks</strong> (PNG, RIFF/WAV, MP4 boxes), <strong>tagged segments</strong>
+          (JPEG markers), <strong>tables of records</strong> (ZIP's central directory, ELF program headers), and
+          <strong>trailing indexes</strong> (ZIP, PDF — which is why those formats survive appending). Once you can
+          spot the shape, an unfamiliar format stops being noise.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/hex.ts"></script>
+  </body>
+</html>

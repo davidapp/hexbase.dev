@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>JSON Toolkit — format, validate, tree view, JSON to TypeScript | hexbase.dev</title>
+    <meta name="description" content="Format, minify and validate JSON with exact line/column errors that explain the mistake. Collapsible tree view, document stats, and JSON → TypeScript interface generation. Runs locally in your browser." />
+    <link rel="canonical" href="https://hexbase.dev/tools/json/" />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container wide">
+      <div class="page-head">
+        <h1>JSON Toolkit</h1>
+        <p class="sub">
+          Format, minify, sort and validate. When your JSON is broken, the validator points at the exact character and
+          explains <em>why</em> it's wrong — trailing commas, single quotes, unquoted keys, all the classics.
+        </p>
+      </div>
+
+      <div class="tool-grid">
+        <div>
+          <div class="pane-title">
+            <span>input</span>
+            <span class="btn-row">
+              <button class="btn small" id="sample">sample</button>
+              <button class="btn small" id="clear">clear</button>
+            </span>
+          </div>
+          <textarea id="input" rows="18" spellcheck="false" placeholder='{"paste": "your JSON here"}'></textarea>
+          <div class="btn-row" style="margin-top: 10px">
+            <button class="btn primary" id="format">format</button>
+            <button class="btn" id="minify">minify</button>
+            <button class="btn" id="typescript">→ TypeScript</button>
+            <select id="indent" title="Indentation">
+              <option value="2">2 spaces</option>
+              <option value="4">4 spaces</option>
+              <option value="tab">tabs</option>
+            </select>
+            <label class="checks"><input type="checkbox" id="sort" /> sort keys</label>
+            <span style="flex: 1"></span>
+            <button class="btn small" id="share">share</button>
+          </div>
+          <div class="msg hidden" id="json-msg"></div>
+          <pre class="out hidden mono" id="errctx"></pre>
+        </div>
+        <div>
+          <div class="tabs" id="out-tabs">
+            <button data-tab="output">output</button>
+            <button data-tab="tree">tree</button>
+            <button data-tab="stats">stats</button>
+          </div>
+          <div data-panel="output">
+            <div class="pane-title"><span>result</span><button class="btn small" id="copy">copy</button></div>
+            <pre class="out" id="output" style="max-height: 560px"></pre>
+          </div>
+          <div data-panel="tree">
+            <div class="tree" id="tree" style="max-height: 560px"></div>
+            <div class="tnote" id="treepath">Click a node to copy its path.</div>
+          </div>
+          <div data-panel="stats">
+            <table class="kv" id="stats"></table>
+          </div>
+        </div>
+      </div>
+
+      <section class="learn">
+        <h2>The whole grammar fits on a napkin</h2>
+        <p>
+          JSON has exactly six value types: <code>object</code>, <code>array</code>, <code>string</code>,
+          <code>number</code>, <code>true/false</code>, <code>null</code>. Douglas Crockford specified it in 2001 on
+          roughly one page, and it hasn't changed since — that immutability is why everything speaks it.
+        </p>
+
+        <h2>The classic mistakes (all caught by this validator)</h2>
+        <table>
+          <thead><tr><th>Input</th><th>Problem</th></tr></thead>
+          <tbody>
+            <tr><td>{"a": 1,}</td><td>Trailing commas are JavaScript, not JSON</td></tr>
+            <tr><td>{'a': 1}</td><td>Strings and keys must use double quotes</td></tr>
+            <tr><td>{a: 1}</td><td>Keys must be quoted</td></tr>
+            <tr><td>{"a": undefined}</td><td>No <code>undefined</code> — use <code>null</code></td></tr>
+            <tr><td>{"a": NaN}</td><td>No <code>NaN</code>/<code>Infinity</code> — JSON numbers are finite</td></tr>
+            <tr><td>{"a": 0123}</td><td>No leading zeros (that's octal thinking)</td></tr>
+            <tr><td>{"a": "line\nbreak"}</td><td>Raw newlines inside strings must be escaped as <code>\n</code></td></tr>
+          </tbody>
+        </table>
+
+        <h2>Numbers are quietly dangerous</h2>
+        <p>
+          The spec puts no limit on number size, but JavaScript parses numbers into 64-bit floats: integers above
+          <code>2⁵³−1</code> (9,007,199,254,740,991) silently lose precision. A tweet ID like
+          <code>1144332590000000001</code> becomes <code>…000000000</code> after a round-trip through
+          <code>JSON.parse</code>. APIs that hand out 64-bit IDs send them as strings for exactly this reason.
+        </p>
+
+        <h2>JSON ≠ JavaScript</h2>
+        <p class="dim">
+          Close cousins, not twins: JSON requires double quotes and forbids comments, trailing commas and
+          <code>undefined</code>. In the other direction, JSON permits <code>U+2028/U+2029</code> unescaped, which for
+          years made "valid JSON" that crashed as JavaScript. Treat JSON as a data format that merely dresses like JS.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/json.ts"></script>
+  </body>
+</html>

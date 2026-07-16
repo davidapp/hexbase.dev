@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Encode / Decode — Base64, URL, HTML, hex, Unicode, JWT, hashes | hexbase.dev</title>
+    <meta name="description" content="Encode and decode Base64, URL percent-encoding, HTML entities, hex, binary and Unicode escapes; decode JWTs with claim explanations; compute MD5/SHA hashes; inspect strings code point by code point. Runs locally." />
+    <link rel="canonical" href="https://hexbase.dev/tools/encode/" />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container wide">
+      <div class="page-head">
+        <h1>Encode / Decode</h1>
+        <p class="sub">
+          Encodings are not encryption — they're costumes bytes wear to travel safely through systems with opinions
+          about text. Everything here runs locally, so tokens and secrets never leave your browser.
+        </p>
+      </div>
+
+      <div class="tabs" id="main-tabs">
+        <button data-tab="base64">base64</button>
+        <button data-tab="url">url</button>
+        <button data-tab="html">html</button>
+        <button data-tab="hexbin">hex / binary</button>
+        <button data-tab="unicode">unicode</button>
+        <button data-tab="jwt">jwt</button>
+        <button data-tab="hash">hash</button>
+      </div>
+
+      <!-- base64 -->
+      <div data-panel="base64">
+        <div class="tool-grid">
+          <div>
+            <div class="pane-title"><span>text / base64</span></div>
+            <textarea id="b64-in" rows="9" spellcheck="false" placeholder="Hello, 世界! — or paste base64 to decode"></textarea>
+            <div class="btn-row" style="margin-top: 10px">
+              <button class="btn primary" id="b64-enc">encode →</button>
+              <button class="btn" id="b64-dec">← decode</button>
+              <label class="checks"><input type="checkbox" id="b64-url" /> URL-safe (-_ instead of +/, no padding)</label>
+            </div>
+            <div class="msg hidden" id="b64-msg"></div>
+          </div>
+          <div>
+            <div class="pane-title"><span>result</span><button class="btn small copy-out" data-for="b64-out">copy</button></div>
+            <pre class="out" id="b64-out"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- url -->
+      <div data-panel="url">
+        <div class="tool-grid">
+          <div>
+            <div class="pane-title"><span>input</span></div>
+            <textarea id="url-in" rows="9" spellcheck="false" placeholder="https://example.com/search?q=hello world&lang=中文"></textarea>
+            <div class="btn-row" style="margin-top: 10px">
+              <button class="btn primary" id="url-enc">encode →</button>
+              <button class="btn" id="url-dec">← decode</button>
+              <label class="checks"><input type="checkbox" id="url-full" /> whole-URI mode (keeps :/?#&amp;=)</label>
+              <label class="checks"><input type="checkbox" id="url-plus" /> decode + as space</label>
+            </div>
+            <div class="msg hidden" id="url-msg"></div>
+          </div>
+          <div>
+            <div class="pane-title"><span>result</span><button class="btn small copy-out" data-for="url-out">copy</button></div>
+            <pre class="out" id="url-out"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- html -->
+      <div data-panel="html">
+        <div class="tool-grid">
+          <div>
+            <div class="pane-title"><span>input</span></div>
+            <textarea id="html-in" rows="9" spellcheck="false" placeholder='<a href="/x?a=1&b=2">tags & "quotes"</a>'></textarea>
+            <div class="btn-row" style="margin-top: 10px">
+              <button class="btn primary" id="html-enc">escape →</button>
+              <button class="btn" id="html-dec">← unescape</button>
+              <label class="checks"><input type="checkbox" id="html-full" /> also escape non-ASCII numerically</label>
+            </div>
+          </div>
+          <div>
+            <div class="pane-title"><span>result</span><button class="btn small copy-out" data-for="html-out">copy</button></div>
+            <pre class="out" id="html-out"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- hex / binary -->
+      <div data-panel="hexbin">
+        <div class="tool-grid">
+          <div>
+            <div class="pane-title"><span>input</span></div>
+            <textarea id="hb-in" rows="9" spellcheck="false" placeholder="hexbase — or paste 68 65 78 … / 01101000 to decode"></textarea>
+            <div class="btn-row" style="margin-top: 10px">
+              <button class="btn primary" id="hb-tohex">→ hex</button>
+              <button class="btn" id="hb-fromhex">hex →  text</button>
+              <button class="btn primary" id="hb-tobin">→ binary</button>
+              <button class="btn" id="hb-frombin">binary → text</button>
+            </div>
+            <div class="msg hidden" id="hb-msg"></div>
+          </div>
+          <div>
+            <div class="pane-title"><span>result</span><button class="btn small copy-out" data-for="hb-out">copy</button></div>
+            <pre class="out" id="hb-out"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- unicode -->
+      <div data-panel="unicode">
+        <div class="tool-grid">
+          <div>
+            <div class="pane-title"><span>input</span></div>
+            <textarea id="uni-in" rows="6" spellcheck="false" placeholder="café ☕ 𝕏 👨‍👩‍👧 — or café to unescape"></textarea>
+            <div class="btn-row" style="margin-top: 10px">
+              <button class="btn primary" id="uni-enc">escape →</button>
+              <button class="btn" id="uni-dec">← unescape</button>
+              <label class="checks"><input type="checkbox" id="uni-es6" /> ES2015 style \u{1D54F}</label>
+              <button class="btn" id="uni-inspect">inspect characters</button>
+            </div>
+            <pre class="out" id="uni-out" style="margin-top: 10px"></pre>
+          </div>
+          <div>
+            <div class="pane-title"><span>character inspector</span></div>
+            <div class="chargrid" id="chargrid"></div>
+            <div class="tnote" id="uni-note"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- jwt -->
+      <div data-panel="jwt">
+        <div class="tool-grid">
+          <div>
+            <div class="pane-title"><span>token</span><button class="btn small" id="jwt-sample">sample</button></div>
+            <textarea id="jwt-in" rows="8" spellcheck="false" placeholder="eyJhbGciOi… (paste a JWT — it is decoded locally, never sent anywhere)"></textarea>
+            <div class="btn-row" style="margin-top: 10px">
+              <button class="btn primary" id="jwt-dec">decode</button>
+              <input type="text" id="jwt-secret" placeholder="optional: HS256 shared secret to verify" style="flex: 1; min-width: 200px" />
+              <button class="btn" id="jwt-verify">verify</button>
+            </div>
+            <div class="msg hidden" id="jwt-msg"></div>
+          </div>
+          <div>
+            <div class="pane-title"><span>decoded</span></div>
+            <pre class="out" id="jwt-out" style="max-height: 300px"></pre>
+            <table class="kv" id="jwt-claims" style="margin-top: 10px"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- hash -->
+      <div data-panel="hash">
+        <div class="tool-grid">
+          <div>
+            <div class="pane-title"><span>input text</span></div>
+            <textarea id="hash-in" rows="9" spellcheck="false" placeholder="text to digest"></textarea>
+            <div class="btn-row" style="margin-top: 10px">
+              <button class="btn primary" id="hash-run">hash</button>
+              <span class="checks">MD5 and SHA-1 are shown for legacy interop — do not use them for security.</span>
+            </div>
+          </div>
+          <div>
+            <div class="pane-title"><span>digests</span><span>click to copy</span></div>
+            <table class="kv" id="hash-out"></table>
+          </div>
+        </div>
+      </div>
+
+      <section class="learn">
+        <h2>Why Base64 exists (and why it's 4/3 bigger)</h2>
+        <p>
+          Old transport channels (email!) only promised to deliver 7-bit ASCII safely. Base64 re-expresses arbitrary
+          bytes using 64 safe characters: every <strong>3 bytes (24 bits)</strong> become <strong>4 characters of 6
+          bits each</strong> — hence exactly 33% growth, and <code>=</code> padding when input length isn't a multiple
+          of 3. The URL-safe variant swaps <code>+/</code> for <code>-_</code> because <code>+</code> means "space" in
+          query strings and <code>/</code> is a path separator. JWTs use the URL-safe flavor without padding.
+        </p>
+
+        <h2>Percent-encoding has two modes</h2>
+        <p>
+          <code>encodeURIComponent</code> escapes everything that could confuse a URL (<code>?</code>, <code>&amp;</code>,
+          <code>=</code>, <code>/</code>…) — use it for individual parameter values. <code>encodeURI</code> keeps URL
+          structure characters intact — only for already-assembled URLs. The classic bug is using the wrong one:
+          <code>a=1&amp;b=2</code> as a <em>value</em> must become <code>a%3D1%26b%3D2</code>.
+          The <code>+</code>-means-space rule is a separate convention from HTML forms
+          (<code>application/x-www-form-urlencoded</code>), not part of percent-encoding itself.
+        </p>
+
+        <h2>UTF-8 in one table</h2>
+        <table>
+          <thead><tr><th>Code point range</th><th>Bytes</th><th>Pattern</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>U+0000–U+007F</td><td>1</td><td>0xxxxxxx</td><td>A → 41</td></tr>
+            <tr><td>U+0080–U+07FF</td><td>2</td><td>110xxxxx 10xxxxxx</td><td>é → C3 A9</td></tr>
+            <tr><td>U+0800–U+FFFF</td><td>3</td><td>1110xxxx 10xxxxxx 10xxxxxx</td><td>世 → E4 B8 96</td></tr>
+            <tr><td>U+10000–U+10FFFF</td><td>4</td><td>11110xxx 10xxxxxx ×3</td><td>🚀 → F0 9F 9A 80</td></tr>
+          </tbody>
+        </table>
+        <p class="dim">
+          ASCII is valid UTF-8 unchanged — the design trick (by Thompson &amp; Pike, sketched on a placemat in 1992)
+          that let UTF-8 conquer the world. The continuation-byte prefix <code>10…</code> means you can seek into the
+          middle of a file and resynchronize.
+        </p>
+
+        <h2>A JWT is signed, not secret</h2>
+        <p>
+          <code>header.payload.signature</code>, each part base64url. The payload is <em>readable by anyone</em> —
+          decoding it (what this tool does) requires no key. The signature only proves who issued it and that it
+          wasn't modified. Never put secrets in claims; always validate <code>exp</code>, <code>aud</code> and
+          <code>iss</code> server-side; and reject <code>"alg": "none"</code>.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/encode.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>hexbase.dev — inspect the bytes</title>
+    <meta name="description" content="Developer tools that show you what your data is made of: binary file inspector, network packet decoder, JSON/XML formatters, timestamp converter, encoders — all running locally in your browser, each one a small lesson in its format." />
+    <link rel="canonical" href="https://hexbase.dev/" />
+    <meta property="og:title" content="hexbase.dev — inspect the bytes" />
+    <meta property="og:description" content="Binary inspector, packet decoder, JSON/XML/timestamp/encoding tools. Local-first, built to teach." />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container">
+      <section class="hero">
+        <div class="byteline">68 65 78 62 61 73 65 <span class="hl">2E</span> 64 65 76 <span class="hl">0A</span> 49 6E 73 70 65 63 74 20 74 68 65 20 62 79 74 65 73 <span class="hl">2E</span></div>
+        <h1 class="wordmark">hexbase<span class="tld">.dev</span></h1>
+        <p class="tag">
+          Tools that show you what your data is actually made of — file structures, packet headers, timestamps,
+          encodings. Everything runs locally in your browser, and every tool doubles as a short lesson in the format it
+          handles.
+        </p>
+        <div class="btn-row">
+          <a class="btn primary" href="/tools/hex/">Drop a file in the hex inspector</a>
+          <a class="btn" href="/tools/packet/">Decode a network packet</a>
+        </div>
+      </section>
+
+      <section class="tool-cards" aria-label="Tools">
+        <a class="tool-card" href="/tools/hex/">
+          <div class="tc-head"><span class="tc-icon">0x</span><h3>Hex Inspector</h3></div>
+          <p>Drop any file: hex view, magic-byte identification, and a full structural breakdown for PNG, JPEG, ZIP, ELF, PE, Mach-O, SQLite, MP4, WASM and more.</p>
+          <span class="tc-eg">89 50 4E 47 0D 0A 1A 0A → PNG, 320×240, 8-bit RGBA</span>
+        </a>
+        <a class="tool-card" href="/tools/packet/">
+          <div class="tc-head"><span class="tc-icon">↯</span><h3>Packet Decoder</h3></div>
+          <p>Paste a hex dump, get the full protocol stack: Ethernet → IP → TCP/UDP → DNS, TLS, HTTP — with verified checksums and every field explained.</p>
+          <span class="tc-eg">45 00 00 54 … → IPv4, TTL 64, checksum valid</span>
+        </a>
+        <a class="tool-card" href="/tools/json/">
+          <div class="tc-head"><span class="tc-icon">{}</span><h3>JSON Toolkit</h3></div>
+          <p>Format, minify, sort keys and validate with exact line/column errors that explain the mistake. Tree view, stats, and JSON → TypeScript generation.</p>
+          <span class="tc-eg">{"a":1,} → trailing comma at line 1, column 8</span>
+        </a>
+        <a class="tool-card" href="/tools/xml/">
+          <div class="tc-head"><span class="tc-icon">&lt;/&gt;</span><h3>XML Toolkit</h3></div>
+          <p>Pretty-print, minify and validate XML, test XPath expressions against your document, and escape/unescape entities.</p>
+          <span class="tc-eg">//book[@lang="en"]/title → 3 matches</span>
+        </a>
+        <a class="tool-card" href="/tools/timestamp/">
+          <div class="tc-head"><span class="tc-icon">t₀</span><h3>Timestamp Converter</h3></div>
+          <p>Unix seconds to nanoseconds, Windows FILETIME, NTP, .NET ticks, Excel serials, GPS time — every epoch, converted both ways, with world-clock view.</p>
+          <span class="tc-eg">133497696000000000 → 2024-01-15 (FILETIME)</span>
+        </a>
+        <a class="tool-card" href="/tools/encode/">
+          <div class="tc-head"><span class="tc-icon">⇄</span><h3>Encode / Decode</h3></div>
+          <p>Base64, URL, HTML entities, hex, binary, Unicode escapes, JWT decoding with claim explanations, hashes, and a per-character string inspector.</p>
+          <span class="tc-eg">aGV4YmFzZQ== ⇄ hexbase</span>
+        </a>
+      </section>
+
+      <section class="feature-strip" id="about">
+        <div class="card">
+          <h3>Local-first, by design</h3>
+          <p>Files, tokens and packet dumps are processed with plain TypeScript in your tab. Nothing is uploaded unless you explicitly click Share.</p>
+        </div>
+        <div class="card">
+          <h3>Built to teach</h3>
+          <p>Every parsed field carries a plain-English note: why PNG starts with \x89, why 1601 matters to Windows, what the TCP window actually does. Tools you can learn from, not just use.</p>
+        </div>
+        <div class="card">
+          <h3>Share when you want</h3>
+          <p>One click turns your snippet into a short link (30-day expiry) stored on Cloudflare's edge — D1 for metadata, R2 for content. That's the only time data leaves your browser.</p>
+        </div>
+      </section>
+
+      <section class="learn">
+        <h2>One byte at a time</h2>
+        <p class="dim">Little things worth knowing, from the tools themselves:</p>
+        <ul>
+          <li>ZIP files are read <em>backwards</em> — the real index sits at the end of the file. <a href="/tools/hex/">See it in the hex inspector →</a></li>
+          <li>Signed 32-bit Unix time overflows on <code>2038-01-19 03:14:07 UTC</code>. <a href="/tools/timestamp/">The Y2038 problem →</a></li>
+          <li>The hostname you visit travels unencrypted inside a TLS ClientHello (SNI). <a href="/tools/packet/">Decode one →</a></li>
+          <li>Base64 grows data by exactly 4/3 — three bytes become four characters. <a href="/tools/encode/">Why →</a></li>
+        </ul>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/home.ts"></script>
+  </body>
+</html>

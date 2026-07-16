@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>XML Toolkit — format, validate, XPath tester | hexbase.dev</title>
+    <meta name="description" content="Pretty-print, minify and validate XML, run XPath queries against your document, and escape/unescape entities — locally in your browser." />
+    <link rel="canonical" href="https://hexbase.dev/tools/xml/" />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container wide">
+      <div class="page-head">
+        <h1>XML Toolkit</h1>
+        <p class="sub">
+          Format, minify and validate XML, then interrogate it with XPath. Validation uses the browser's real XML
+          parser, so what passes here parses everywhere.
+        </p>
+      </div>
+
+      <div class="tool-grid">
+        <div>
+          <div class="pane-title">
+            <span>input</span>
+            <span class="btn-row">
+              <button class="btn small" id="sample">sample</button>
+              <button class="btn small" id="clear">clear</button>
+            </span>
+          </div>
+          <textarea id="input" rows="18" spellcheck="false" placeholder="<catalog>...</catalog>"></textarea>
+          <div class="btn-row" style="margin-top: 10px">
+            <button class="btn primary" id="format">format</button>
+            <button class="btn" id="minify">minify</button>
+            <button class="btn" id="validate">validate</button>
+            <button class="btn" id="escape">escape</button>
+            <button class="btn" id="unescape">unescape</button>
+            <span style="flex: 1"></span>
+            <button class="btn small" id="share">share</button>
+          </div>
+          <div class="msg hidden" id="xml-msg"></div>
+        </div>
+        <div>
+          <div class="pane-title"><span>result</span><button class="btn small" id="copy">copy</button></div>
+          <pre class="out" id="output" style="max-height: 420px"></pre>
+          <div class="pane-title" style="margin-top: 16px"><span>xpath</span></div>
+          <div class="btn-row">
+            <input type="text" id="xpath" placeholder='//book[@lang="en"]/title' spellcheck="false" style="flex: 1" />
+            <button class="btn" id="run-xpath">run</button>
+          </div>
+          <div class="out" id="xpath-out" style="margin-top: 8px; max-height: 220px"></div>
+        </div>
+      </div>
+
+      <section class="learn">
+        <h2>Well-formed vs. valid</h2>
+        <p>
+          XML draws a line JSON never needed: a document is <strong>well-formed</strong> when the syntax is right
+          (every tag closed, one root, attributes quoted, <code>&amp;</code> escaped) and <strong>valid</strong> when
+          it also obeys a schema (DTD, XSD, RELAX NG). Browsers check well-formedness — and unlike HTML, XML parsers
+          are draconian by spec: one bare ampersand and the whole document is rejected.
+        </p>
+
+        <h2>The five predefined entities</h2>
+        <table>
+          <thead><tr><th>Entity</th><th>Character</th><th>Must be escaped</th></tr></thead>
+          <tbody>
+            <tr><td>&amp;amp;</td><td>&amp;</td><td>always in text and attributes</td></tr>
+            <tr><td>&amp;lt;</td><td>&lt;</td><td>always in text</td></tr>
+            <tr><td>&amp;gt;</td><td>&gt;</td><td>only in the sequence ]]&gt;</td></tr>
+            <tr><td>&amp;quot;</td><td>"</td><td>inside double-quoted attributes</td></tr>
+            <tr><td>&amp;apos;</td><td>'</td><td>inside single-quoted attributes</td></tr>
+          </tbody>
+        </table>
+        <p class="dim">
+          Everything else (<code>&amp;copy;</code>, <code>&amp;nbsp;</code>…) is an HTML habit — in XML those are
+          undefined unless a DTD declares them. Use numeric references like <code>&amp;#169;</code> instead.
+        </p>
+
+        <h2>XPath in five patterns</h2>
+        <table>
+          <thead><tr><th>Expression</th><th>Selects</th></tr></thead>
+          <tbody>
+            <tr><td>//title</td><td>every &lt;title&gt; anywhere</td></tr>
+            <tr><td>/catalog/book</td><td>books that are direct children of the root</td></tr>
+            <tr><td>//book[@lang="en"]</td><td>books with a lang="en" attribute</td></tr>
+            <tr><td>//book[price &gt; 30]/title</td><td>titles of books costing more than 30</td></tr>
+            <tr><td>count(//book)</td><td>a number, not nodes — XPath has functions too</td></tr>
+          </tbody>
+        </table>
+
+        <h2>CDATA: the escape hatch</h2>
+        <p class="dim">
+          <code>&lt;![CDATA[ raw &lt;text&gt; &amp; symbols ]]&gt;</code> tells the parser "don't interpret any of
+          this" — handy for embedded code or markup samples. The only thing it can't contain is the terminator
+          <code>]]&gt;</code> itself.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/xml.ts"></script>
+  </body>
+</html>

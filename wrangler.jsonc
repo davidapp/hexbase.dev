@@ -1,0 +1,58 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "hexbase",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Static site built by Vite into ./dist. Asset requests are served directly
+  // from the edge; /api/* and /s/* always run the Worker first.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*", "/s/*"]
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  // Nightly purge of expired shared snippets (D1 rows + R2 objects).
+  "triggers": {
+    "crons": ["17 3 * * *"]
+  },
+
+  // Share links use the request origin when this is empty; set it once
+  // the hexbase.dev custom domain is attached if you want it forced.
+  "vars": {
+    "SITE_ORIGIN": ""
+  },
+
+  // D1: links directory + share metadata.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hexbase-db",
+      "database_id": "b82f6c31-07ee-49eb-a637-de4a0905f62a"
+    }
+  ],
+
+  // KV: response caching + rate-limit counters.
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "f19c35e57c3344928bfb6ee1cd46b688"
+    }
+  ],
+
+  // R2: shared snippet payloads.
+  "r2_buckets": [
+    {
+      "binding": "SHARES",
+      "bucket_name": "hexbase-shares"
+    }
+  ]
+}

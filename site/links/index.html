@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Developer Links — hexbase.dev</title>
+    <meta name="description" content="A curated portal of developer references: standards and RFCs, playgrounds, networking and security tools, package registries, learning resources and communities." />
+    <link rel="canonical" href="https://hexbase.dev/links/" />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container">
+      <div class="page-head">
+        <h1>Developer links</h1>
+        <p class="sub">
+          A small, opinionated portal: the references, registries and playgrounds worth keeping one keystroke away.
+          Served from Cloudflare D1 with a KV cache in front.
+        </p>
+      </div>
+      <input type="text" id="filter" placeholder="filter links… (e.g. rfc, rust, dns)" autocomplete="off" style="max-width: 420px" />
+      <div class="msg hidden" id="links-msg"></div>
+      <div class="links-grid" id="links" style="margin-top: 18px"></div>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/links.ts"></script>
+  </body>
+</html>

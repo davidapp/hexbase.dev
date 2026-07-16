@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Packet Decoder — decode network protocol hex dumps online | hexbase.dev</title>
+    <meta name="description" content="Paste a raw packet hex dump and decode the full protocol stack: Ethernet, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, TLS, HTTP, NTP — with verified checksums and every header field explained. Runs locally." />
+    <link rel="canonical" href="https://hexbase.dev/tools/packet/" />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container wide">
+      <div class="page-head">
+        <h1>Packet Decoder</h1>
+        <p class="sub">
+          Paste bytes from Wireshark, tcpdump, <code>xxd</code>, or a C array — the parser strips offsets and ASCII
+          gutters automatically. It decodes layer by layer, verifies every checksum, and explains each field as it
+          goes. All parsing happens in your browser.
+        </p>
+      </div>
+
+      <textarea id="input" rows="7" spellcheck="false" placeholder="0000  a4 83 e7 4e 5f 60 3c 7c  3f 1a 2b 3c 08 00 45 00   ...N_`<|?.+<..E.
+0010  00 3d 1c 46 40 00 40 11  ...
+
+(raw hex, xxd, hexdump -C, Wireshark exports and \x-escapes all work)"></textarea>
+      <div class="btn-row" style="margin-top: 10px">
+        <button class="btn primary" id="decode">decode</button>
+        <label class="field" style="margin: 0" for="first-layer">first layer</label>
+        <select id="first-layer"></select>
+        <span class="spacer" style="flex: 1"></span>
+        <button class="btn small" id="share">share</button>
+      </div>
+      <div class="btn-row" style="margin-top: 8px">
+        <span style="font: 0.78rem var(--font-mono); color: var(--muted)">samples:</span>
+        <span id="samples"></span>
+      </div>
+
+      <div class="msg hidden" id="pkt-msg"></div>
+
+      <section id="result" class="hidden" style="margin-top: 18px">
+        <div class="card" id="summary" style="margin-bottom: 16px"></div>
+        <div class="tool-grid thirds">
+          <div>
+            <div class="pane-title"><span>bytes</span></div>
+            <div id="hexview"></div>
+          </div>
+          <div>
+            <div class="pane-title"><span>protocol stack</span><span style="text-transform:none">click a field → bytes highlight</span></div>
+            <div class="tree" id="tree"></div>
+            <div class="tnote" id="note"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="learn">
+        <h2>Encapsulation: envelopes inside envelopes</h2>
+        <p>
+          A packet on the wire is a set of nested envelopes. Ethernet says <em>which machine on this cable</em>; IP
+          says <em>which host on the internet</em>; TCP/UDP say <em>which program on that host</em>; the payload is
+          the actual conversation. Each layer prepends its own header and treats everything inside as opaque cargo:
+        </p>
+        <pre>┌──────────────────────────────────────────────────────────┐
+│ Ethernet   dst MAC · src MAC · type            (14 bytes) │
+│ ┌──────────────────────────────────────────────────────┐  │
+│ │ IPv4      src IP · dst IP · TTL · proto     (20 bytes)│  │
+│ │ ┌──────────────────────────────────────────────────┐ │  │
+│ │ │ TCP     ports · seq/ack · flags · window (20+ B) │ │  │
+│ │ │ ┌──────────────────────────────────────────────┐ │ │  │
+│ │ │ │ payload   HTTP, TLS, DNS, …                  │ │ │  │
+│ │ │ └──────────────────────────────────────────────┘ │ │  │
+│ │ └──────────────────────────────────────────────────┘ │  │
+│ └──────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘</pre>
+
+        <h2>Things the decoder checks for you</h2>
+        <ul>
+          <li><strong>IPv4 header checksum</strong> — recomputed at every hop (the TTL changes), covers the header only.</li>
+          <li><strong>TCP/UDP checksums</strong> — computed over a <em>pseudo-header</em> that borrows the IP addresses, so a packet delivered to the wrong host fails validation. Captures of outgoing traffic often show "invalid" here because the NIC fills the checksum in hardware after the capture point (checksum offload).</li>
+          <li><strong>TTL fingerprints</strong> — initial TTL is typically 64 (Linux/macOS), 128 (Windows) or 255 (routers). A TTL of 57 usually means "Linux box, 7 hops away".</li>
+          <li><strong>DNS compression pointers</strong> — names in responses reuse earlier bytes via <code>0xC0xx</code> back-references; the decoder follows them like a resolver would.</li>
+          <li><strong>SNI in plain text</strong> — the hostname inside a TLS ClientHello is not encrypted. Decode the sample and find it.</li>
+        </ul>
+
+        <h2>Where to get real bytes</h2>
+        <p class="dim">
+          Wireshark: right-click a packet → Copy → …as a Hex Dump. tcpdump: <code>tcpdump -XX -c 1 port 53</code>.
+          Or grab one frame out of a <code>.pcap</code> in the <a href="/tools/hex/">hex inspector</a> and paste it here.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/packet.ts"></script>
+  </body>
+</html>

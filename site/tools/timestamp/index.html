@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Timestamp Converter — Unix, FILETIME, NTP, Excel, GPS epochs | hexbase.dev</title>
+    <meta name="description" content="Convert timestamps between every epoch that matters: Unix seconds to nanoseconds, Windows FILETIME, .NET ticks, NTP, Excel serial dates, HFS+, Cocoa and GPS time — with world-clock view and epoch reference. Runs locally." />
+    <link rel="canonical" href="https://hexbase.dev/tools/timestamp/" />
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container">
+      <div class="page-head">
+        <h1>Timestamp Converter</h1>
+        <p class="sub">
+          Computing never agreed on when time began. Unix picked 1970, Windows 1601, Apple 1904 <em>and</em> 2001,
+          Excel 1900, GPS 1980. Paste any number and this tool reads it against every epoch — the plausible ones float
+          to the top.
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom: 18px">
+        <div class="pane-title"><span>now</span><span>click any value to copy</span></div>
+        <table class="kv" id="now-table"></table>
+      </div>
+
+      <div class="pane-title"><span>convert</span></div>
+      <div class="btn-row">
+        <input type="text" id="input" placeholder="1700000000 · 133497696000000000 · 2024-01-15T12:00:00Z · 45292.5" spellcheck="false" style="flex: 1; min-width: 260px" />
+        <button class="btn primary" id="convert">convert</button>
+        <button class="btn small" id="use-now">use now</button>
+      </div>
+      <div class="msg hidden" id="ts-msg"></div>
+
+      <section id="interp-section" class="hidden" style="margin-top: 14px">
+        <div class="pane-title"><span>readings of this number</span><span>click a row to expand it below</span></div>
+        <table class="kv" id="interp"></table>
+      </section>
+
+      <section id="detail-section" class="hidden" style="margin-top: 18px">
+        <div class="card">
+          <div class="pane-title"><span id="detail-title">instant</span></div>
+          <table class="kv" id="detail"></table>
+        </div>
+        <div style="margin-top: 14px">
+          <div class="pane-title"><span>same instant around the world</span></div>
+          <table class="kv" id="zones"></table>
+        </div>
+      </section>
+
+      <section class="learn">
+        <h2>The epoch zoo</h2>
+        <table id="epoch-table">
+          <thead><tr><th>System</th><th>Counts</th><th>Zero point</th><th>Why that date</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <h2>Y2038: the 32-bit cliff</h2>
+        <p>
+          A signed 32-bit <code>time_t</code> tops out at <code>2³¹−1</code> seconds:
+          <strong>2038-01-19 03:14:07 UTC</strong>. One tick later it wraps to −2³¹ — 1901-12-13. Modern 64-bit systems
+          are safe for 292 billion years, but embedded devices, old file formats and 32-bit fields in protocols keep
+          the bug alive. If you see a date in December 1901 or January 1970, suspect an overflow or a zero.
+        </p>
+
+        <h2>ISO 8601, the one true string format</h2>
+        <pre>2026-07-16T14:30:00.123+08:00
+└──┬───┘ └───┬──────┘└──┬──┘
+  date      time      offset   ·  Z means +00:00 (UTC)</pre>
+        <p class="dim">
+          Big-endian dates sort lexicographically — <code>ls</code> sorts them chronologically for free. RFC 3339 is
+          the internet profile of ISO 8601: stricter, and what APIs should emit.
+        </p>
+
+        <h2>Leap seconds &amp; smearing</h2>
+        <p class="dim">
+          UTC has gained 27 leap seconds since 1972 to track Earth's slowing rotation; Unix time pretends they don't
+          exist (each leap second, one Unix second repeats). GPS time never adds them, which is why GPS is currently
+          18&nbsp;s ahead of UTC. Google and AWS "smear" the extra second across the surrounding day instead. A new
+          wrinkle: Earth sped up recently, and a <em>negative</em> leap second is on the table before the practice is
+          abolished (currently planned around 2035).
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/timestamp.ts"></script>
+  </body>
+</html>
