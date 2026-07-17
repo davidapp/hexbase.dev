@@ -1005,6 +1005,125 @@ table.kv .dim {
   margin-top: 4px;
 }
 
+/* ---------------- format guide pages ---------------- */
+
+.crumbs {
+  font: 0.78rem var(--font-mono);
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+.crumbs a {
+  color: var(--accent);
+}
+.magic-card .byteline {
+  font-size: clamp(0.9rem, 2.4vw, 1.15rem);
+  margin: 6px 0 0;
+  overflow-x: auto;
+}
+
+/* ---------------- pcap frame list ---------------- */
+
+.framelist {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: 0.78rem var(--font-mono);
+}
+.framelist .frow {
+  display: grid;
+  grid-template-columns: 46px 250px 62px minmax(220px, 1fr);
+  gap: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  min-width: 640px;
+}
+.framelist .frow:last-child {
+  border-bottom: none;
+}
+.framelist .frow:hover {
+  background: var(--surface-2);
+}
+.framelist .frow.sel {
+  background: var(--sel);
+}
+.framelist .fnum {
+  color: var(--faint);
+}
+.framelist .ftime {
+  color: var(--muted);
+}
+.framelist .flen {
+  text-align: right;
+  color: var(--muted);
+}
+.framelist .fs {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+/* ---------------- diff tool ---------------- */
+
+#diff-out {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  max-height: 480px;
+  overflow: auto;
+  font: 0.8rem var(--font-mono);
+}
+.drow {
+  display: grid;
+  grid-template-columns: 26px minmax(160px, auto) 1fr;
+  gap: 12px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.drow:last-child {
+  border-bottom: none;
+}
+.drow .dpath {
+  color: var(--accent);
+}
+.drow .dvals {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dline {
+  display: grid;
+  grid-template-columns: 44px 44px 18px 1fr;
+  gap: 0 8px;
+  padding: 1px 10px;
+  white-space: pre;
+}
+.dline .ln {
+  color: var(--faint);
+  text-align: right;
+  user-select: none;
+}
+.dline.add {
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+.dline.add .dmark {
+  color: var(--ok);
+}
+.dline.del {
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+}
+.dline.del .dmark {
+  color: var(--bad);
+}
+.dline .dtext {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---------------- legal pages (terms / privacy) ---------------- */
 
 .legal {

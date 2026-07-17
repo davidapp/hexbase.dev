@@ -6,14 +6,25 @@
   "compatibility_flags": ["nodejs_compat"],
 
   // Static site built by Vite into ./dist. Asset requests are served directly
-  // from the edge; /api/* and /s/* always run the Worker first.
+  // from the edge; the API, share links and HTML page routes run the Worker
+  // first (pages pass through it so views can be counted server-side — no
+  // client-side analytics script exists).
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
-    "run_worker_first": ["/api/*", "/s/*"]
+    "run_worker_first": ["/api/*", "/s/*", "/", "/tools/*", "/formats/*", "/links/", "/terms/", "/privacy/"]
   },
+
+  // Privacy-preserving usage metrics: aggregate page-view counts (path +
+  // country) in Workers Analytics Engine. No IPs, no cookies, no client JS.
+  "analytics_engine_datasets": [
+    {
+      "binding": "METRICS",
+      "dataset": "hexbase_metrics"
+    }
+  ],
 
   "observability": {
     "enabled": true,

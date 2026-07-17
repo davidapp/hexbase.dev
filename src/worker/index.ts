@@ -9,6 +9,8 @@ const SHARE_TOOLS: Record<string, string> = {
   packet: '/tools/packet/',
   hex: '/tools/hex/',
   timestamp: '/tools/timestamp/',
+  diff: '/tools/diff/',
+  cert: '/tools/cert/',
 }
 const MAX_SHARE_BYTES = 256 * 1024
 const SHARE_TTL_MS = 30 * 24 * 3600 * 1000
@@ -151,11 +153,30 @@ app.get('/s/:code', async (c) => {
   return c.redirect(`${SHARE_TOOLS[row.tool]}?share=${code}`, 302)
 })
 
+/** Aggregate, anonymous page-view counting: path + country, nothing else.
+ *  Only HTML routes reach the Worker (see run_worker_first) — static assets
+ *  are served straight from the edge and are not counted. */
+function countPageView(c: { env: Env; req: { raw: Request; path: string; method: string } }): void {
+  if (c.req.method !== 'GET' || !c.env.METRICS) return
+  try {
+    const country = (c.req.raw.cf?.country as string | undefined) ?? 'XX'
+    c.env.METRICS.writeDataPoint({
+      blobs: [c.req.path, country],
+      doubles: [1],
+      indexes: [c.req.path.slice(0, 96)],
+    })
+  } catch {
+    // metrics must never break serving
+  }
+}
+
 app.notFound((c) => {
   if (c.req.path.startsWith('/api/')) {
     return c.json({ error: 'not found' }, 404)
   }
-  // Fall through to static assets (serves the built site + its 404 page).
+  // An HTML page route (run_worker_first) falling through to static assets:
+  // count it, then serve the built site (including its 404 page).
+  countPageView(c)
   return c.env.ASSETS.fetch(c.req.raw)
 })
 

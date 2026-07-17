@@ -20,7 +20,15 @@ import { decodeJwt, JWT_CLAIM_NOTES, verifyJwtHmac } from '@core/jwt'
 import { $, copyText, el, hideMsg, initChrome, initTabs, showMsg, toast } from './ui'
 
 initChrome()
-initTabs(document.body)
+// deep-linkable tabs: /tools/encode/?tab=jwt opens the JWT panel (read before
+// initTabs, whose initial activation rewrites the URL)
+const tabParam = new URLSearchParams(location.search).get('tab')
+initTabs(document.body, (id) => {
+  history.replaceState(null, '', id === 'base64' ? location.pathname : `?tab=${id}`)
+})
+if (tabParam) {
+  document.querySelector<HTMLButtonElement>(`#main-tabs button[data-tab="${CSS.escape(tabParam)}"]`)?.click()
+}
 
 // copy buttons for output panes
 document.querySelectorAll<HTMLButtonElement>('.copy-out').forEach((btn) => {

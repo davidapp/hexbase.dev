@@ -2,12 +2,16 @@
 <html lang="en">
   <head>
     <!--#include:head-->
-    <title>Packet Decoder — decode network protocol hex dumps online | hexbase.dev</title>
-    <meta name="description" content="Paste a raw packet hex dump and decode the full protocol stack: Ethernet, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, TLS, HTTP, NTP — with verified checksums and every header field explained. Runs locally." />
+    <title>Packet Decoder — decode hex dumps and pcap files online | hexbase.dev</title>
+    <meta name="description" content="Paste a packet hex dump or open a .pcap/.pcapng capture file and decode the full protocol stack: Ethernet, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, TLS, HTTP, NTP — with verified checksums and every header field explained. Runs locally; captures are never uploaded." />
     <link rel="canonical" href="https://hexbase.dev/tools/packet/" />
-    <meta property="og:title" content="Packet Decoder — decode network protocol hex dumps online" />
-    <meta property="og:description" content="Paste a hex dump and decode the full protocol stack: Ethernet, IPv4/IPv6, TCP, UDP, DNS, TLS, HTTP — with verified checksums and every field explained. Runs locally." />
+    <meta property="og:title" content="Packet Decoder — decode hex dumps and pcap files online" />
+    <meta property="og:description" content="Paste a hex dump or open a .pcap/.pcapng file and decode the full protocol stack: Ethernet, IPv4/IPv6, TCP, UDP, DNS, TLS, HTTP — with verified checksums. Runs locally; captures are never uploaded." />
     <meta property="og:url" content="https://hexbase.dev/tools/packet/" />
+    <meta property="og:image" content="https://hexbase.dev/og/packet.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Packet Decoder — decode hex dumps and pcap files online" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -22,8 +26,10 @@
             "browserRequirements": "Requires JavaScript",
             "isAccessibleForFree": true,
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-            "description": "Online network packet decoder: paste a hex dump from Wireshark, tcpdump or xxd and walk the full protocol stack — Ethernet, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, TLS, HTTP, NTP — with verified checksums, parsed locally in your browser.",
+            "description": "Online network packet decoder: paste a hex dump from Wireshark, tcpdump or xxd — or open a .pcap/.pcapng capture file — and walk the full protocol stack: Ethernet, ARP, IPv4/IPv6, TCP, UDP, ICMP, DNS, TLS, HTTP, NTP, with verified checksums, parsed locally in your browser.",
             "featureList": [
+              "Opens .pcap and .pcapng capture files with a clickable frame list — no upload",
+              "Handles Ethernet, loopback, raw-IP and Linux cooked (SLL) captures",
               "Accepts raw hex, xxd, hexdump -C, Wireshark exports and \\x escapes",
               "Decodes Ethernet/VLAN, ARP, IPv4, IPv6, TCP with options, UDP, ICMP/ICMPv6, DNS, TLS ClientHello (SNI/ALPN), HTTP, NTP",
               "Verifies IPv4, TCP, UDP and ICMP checksums including pseudo-headers",
@@ -44,6 +50,11 @@
           {
             "@type": "FAQPage",
             "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Can I open a .pcap file online without Wireshark?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes — drop a .pcap or .pcapng file onto this page. You get a clickable frame list with timestamps and per-frame summaries, and each frame decodes layer by layer with verified checksums. Parsing happens entirely in your browser, which matters for captures: they routinely contain credentials, cookies and internal hostnames, so they should never be uploaded to a random website." }
+              },
               {
                 "@type": "Question",
                 "name": "What hex dump formats can I paste?",
@@ -102,8 +113,19 @@
         <span style="font: 0.78rem var(--font-mono); color: var(--muted)">samples:</span>
         <span id="samples"></span>
       </div>
+      <div class="btn-row" style="margin-top: 8px">
+        <label class="btn small" for="pcap-file" style="cursor: pointer">open a .pcap / .pcapng file…</label>
+        <input type="file" id="pcap-file" accept=".pcap,.pcapng,.cap" style="display: none" />
+        <span style="font: 0.78rem var(--font-mono); color: var(--muted)">or drop a capture file anywhere on this page — parsed locally, nothing is uploaded</span>
+      </div>
 
       <div class="msg hidden" id="pkt-msg"></div>
+
+      <section id="pcap-section" class="hidden" style="margin-top: 18px">
+        <div class="card" id="pcap-summary" style="margin-bottom: 12px"></div>
+        <div class="pane-title"><span>frames</span><span id="pcap-count"></span></div>
+        <div class="framelist" id="framelist"></div>
+      </section>
 
       <section id="result" class="hidden" style="margin-top: 18px">
         <div class="card" id="summary" style="margin-bottom: 16px"></div>
@@ -151,13 +173,32 @@
 
         <h2>Where to get real bytes</h2>
         <p class="dim">
-          Wireshark: right-click a packet → Copy → …as a Hex Dump. tcpdump: <code>tcpdump -XX -c 1 port 53</code>.
-          Or grab one frame out of a <code>.pcap</code> in the <a href="/tools/hex/">hex inspector</a> and paste it here.
+          Drop a <code>.pcap</code> or <code>.pcapng</code> file straight onto this page. Or copy a single frame —
+          Wireshark: right-click a packet → Copy → …as a Hex Dump; tcpdump: <code>tcpdump -XX -c 1 port 53</code>.
+        </p>
+
+        <h2>The pcap file format, briefly</h2>
+        <p>
+          A classic <code>.pcap</code> file is beautifully simple: a 24-byte global header (magic
+          <code>A1 B2 C3 D4</code> — its byte order tells you the writer's endianness — plus version, snaplen and
+          link type), then each frame as a 16-byte record header (timestamp seconds + microseconds, captured length,
+          original length) followed by the raw bytes. The newer <code>.pcapng</code> is a block container: a Section
+          Header Block (magic <code>0A 0D 0D 0A</code>), Interface Description Blocks (one per capture interface,
+          each with its own link type and clock resolution), and an Enhanced Packet Block per frame with 64-bit
+          timestamps. This page reads both, including captures from loopback (<code>NULL</code>), raw-IP tunnels and
+          Linux <code>-i any</code> cooked captures (SLL), whose pseudo-headers are stripped before decoding.
         </p>
       </section>
 
       <section class="learn" id="faq">
         <h2>Frequently asked questions</h2>
+        <h3>Can I open a .pcap file online without Wireshark?</h3>
+        <p>
+          Yes — drop a <code>.pcap</code> or <code>.pcapng</code> file onto this page. You get a clickable frame list
+          with timestamps and per-frame summaries, and each frame decodes layer by layer with verified checksums.
+          Parsing happens entirely in your browser, which matters for captures: they routinely contain credentials,
+          cookies and internal hostnames, so they should never be uploaded to a random website.
+        </p>
         <h3>What hex dump formats can I paste?</h3>
         <p>
           Raw hex strings, <code>xxd</code> output, <code>hexdump -C</code> output, Wireshark's <em>Copy … as a Hex

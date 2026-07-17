@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Certificate Decoder — X.509 &amp; ASN.1 viewer with byte-level detail | hexbase.dev</title>
+    <meta name="description" content="Paste a PEM certificate or drop a DER file: subject, issuer, validity with expiry countdown, key type and size, SANs, key usage, and the full ASN.1 structure mapped byte-by-byte onto a hex view. Decoded locally — certificates are never uploaded." />
+    <link rel="canonical" href="https://hexbase.dev/tools/cert/" />
+    <meta property="og:title" content="Certificate Decoder — X.509 &amp; ASN.1 viewer with byte-level detail" />
+    <meta property="og:description" content="Subject, issuer, validity, SANs, key size — plus the full ASN.1 tree mapped onto the actual bytes. Runs locally in your browser." />
+    <meta property="og:url" content="https://hexbase.dev/tools/cert/" />
+    <meta property="og:image" content="https://hexbase.dev/og/cert.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Certificate Decoder — X.509 &amp; ASN.1 viewer with byte-level detail" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/cert/#app",
+            "name": "Certificate Decoder",
+            "url": "https://hexbase.dev/tools/cert/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online X.509 certificate decoder and ASN.1 viewer: paste PEM or drop a DER file to see subject, issuer, validity with expiry countdown, key algorithm and size, subjectAltNames, key usage, extensions and SHA-256/SHA-1 fingerprints — with every field mapped onto the underlying bytes. Runs locally.",
+            "featureList": [
+              "Accepts PEM armor, bare base64, or binary DER files",
+              "Subject, issuer, serial, validity with expiry countdown",
+              "Key algorithm and size (RSA bits, EC curve, Ed25519)",
+              "subjectAltName, keyUsage, extendedKeyUsage, basicConstraints, Certificate Transparency SCTs",
+              "SHA-256 and SHA-1 fingerprints computed locally via WebCrypto",
+              "Full ASN.1 tree with byte offsets — click a field, see its bytes highlighted",
+              "Generic DER mode: any ASN.1 blob gets a structural tree",
+              "Local-first: certificates are decoded in the browser and never uploaded"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "Certificate Decoder", "item": "https://hexbase.dev/tools/cert/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is it safe to paste a certificate here?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Certificates are public by design — they're sent in the clear in every TLS handshake — and this tool decodes them entirely in your browser; nothing is uploaded. Never paste private keys anywhere: the tool refuses PRIVATE KEY PEM blocks outright, because no browser tool should teach you that habit." }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the difference between PEM and DER?",
+                "acceptedAnswer": { "@type": "Answer", "text": "DER is the binary encoding of the certificate's ASN.1 structure. PEM is that same DER wrapped in base64 with -----BEGIN CERTIFICATE----- armor so it survives copy-paste and email. Same bytes, two costumes — this tool accepts both, plus bare base64." }
+              },
+              {
+                "@type": "Question",
+                "name": "Why does my browser ignore the certificate's Common Name?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Hostname matching moved to the subjectAltName extension: RFC 2818 deprecated CN checking in 2000, and Chrome stopped honoring CN entirely in 2017. A certificate without your hostname in its SAN list will fail, no matter what the CN says. The CN survives mostly as a display label." }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I check when a certificate expires?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Paste it here — the validity line shows both dates and computes the days remaining (or how long ago it expired). The notBefore/notAfter fields use UTCTime for dates through 2049 and GeneralizedTime after, a quirk inherited from RFC 5280." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container wide">
+      <div class="page-head">
+        <h1>Certificate Decoder</h1>
+        <p class="sub">
+          A certificate is DER-encoded ASN.1 — nested type-length-value, all the way down. Paste PEM or drop a DER
+          file: you get the facts (who, until when, which names, what key) <em>and</em> the exact bytes each field
+          lives in. Certificates are public; they're decoded locally and never uploaded.
+        </p>
+      </div>
+
+      <div class="tool-grid">
+        <div>
+          <div class="pane-title">
+            <span>certificate — PEM / base64, or drop a .crt / .cer / .der file</span>
+            <span class="btn-row">
+              <button class="btn small" id="sample">sample</button>
+              <button class="btn small" id="clear">clear</button>
+            </span>
+          </div>
+          <textarea id="input" rows="14" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----&#10;MIID…&#10;-----END CERTIFICATE-----"></textarea>
+          <div class="btn-row" style="margin-top: 10px">
+            <button class="btn primary" id="decode">decode</button>
+            <span class="spacer" style="flex: 1"></span>
+            <button class="btn small" id="share" title="Upload this certificate (≤256 KB) and get a 30-day link">share</button>
+          </div>
+          <div class="msg hidden" id="cert-msg"></div>
+        </div>
+        <div>
+          <div class="pane-title"><span>fingerprints</span><span>click to copy</span></div>
+          <table class="kv" id="fingerprints"></table>
+        </div>
+      </div>
+
+      <section id="result" class="hidden" style="margin-top: 18px">
+        <div class="card" id="summary" style="margin-bottom: 16px"></div>
+        <div class="tool-grid thirds">
+          <div>
+            <div class="pane-title"><span>bytes (DER)</span><span id="certinfo"></span></div>
+            <div id="hexview"></div>
+          </div>
+          <div>
+            <div class="pane-title"><span>structure</span><span style="text-transform: none">click a field → bytes highlight</span></div>
+            <div class="tree" id="tree"></div>
+            <div class="tnote" id="note"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="learn">
+        <h2>ASN.1: the format under the format</h2>
+        <p>
+          Everything in a certificate is a <strong>TLV</strong> — one tag byte (what kind of thing), a length, and the
+          value, which is often more TLVs. <code>30</code> opens a SEQUENCE, <code>02</code> an INTEGER,
+          <code>06</code> an OBJECT IDENTIFIER, <code>A0</code> a context-specific wrapper. That's why every
+          certificate starts with <code>30 82 …</code>: a SEQUENCE whose length needs two bytes. The whole X.509
+          grammar is three fields: the part that gets signed, the algorithm, and the signature.
+        </p>
+        <pre>Certificate ::= SEQUENCE {
+    tbsCertificate       "to be signed": version, serial, issuer,
+                         validity, subject, public key, extensions
+    signatureAlgorithm   e.g. ecdsa-with-SHA256
+    signatureValue       the issuer's signature over tbsCertificate }</pre>
+
+        <h2>OIDs: naming by numbers</h2>
+        <p class="dim">
+          Fields aren't named with strings but with <strong>object identifiers</strong> — dotted numbers from a global
+          registration tree. <code>2.5.4.3</code> is "common name", <code>1.2.840.113549.1.1.11</code> is
+          "sha256WithRSAEncryption" (840 = USA, 113549 = RSA Data Security). The decoder knows the ones that matter
+          and shows the raw number for the rest.
+        </p>
+
+        <h2>Three things worth checking on any cert</h2>
+        <ul>
+          <li><strong>The SAN list, not the CN</strong> — browsers only match hostnames against subjectAltName.</li>
+          <li><strong>basicConstraints</strong> — a leaf certificate must say CA:FALSE; a CA that can sign anything says CA:TRUE with an optional path length.</li>
+          <li><strong>The validity window</strong> — public TLS certificates are capped at 398 days, so automation (ACME) is the norm, not the exception.</li>
+        </ul>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>Is it safe to paste a certificate here?</h3>
+        <p>
+          Certificates are public by design — they're sent in the clear in every TLS handshake — and this tool decodes
+          them entirely in your browser; nothing is uploaded. Never paste private keys anywhere: the tool refuses
+          <code>PRIVATE KEY</code> PEM blocks outright, because no browser tool should teach you that habit.
+        </p>
+        <h3>What is the difference between PEM and DER?</h3>
+        <p>
+          DER is the binary encoding of the certificate's ASN.1 structure. PEM is that same DER wrapped in base64 with
+          <code>-----BEGIN CERTIFICATE-----</code> armor so it survives copy-paste and email. Same bytes, two costumes
+          — this tool accepts both, plus bare base64.
+        </p>
+        <h3>Why does my browser ignore the certificate's Common Name?</h3>
+        <p>
+          Hostname matching moved to the subjectAltName extension: RFC 2818 deprecated CN checking in 2000, and Chrome
+          stopped honoring CN entirely in 2017. A certificate without your hostname in its SAN list will fail, no
+          matter what the CN says. The CN survives mostly as a display label.
+        </p>
+        <h3>How do I check when a certificate expires?</h3>
+        <p>
+          Paste it here — the validity line shows both dates and computes the days remaining (or how long ago it
+          expired). The notBefore/notAfter fields use UTCTime for dates through 2049 and GeneralizedTime after, a
+          quirk inherited from RFC 5280.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/cert.ts"></script>
+  </body>
+</html>

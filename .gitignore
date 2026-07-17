@@ -1,5 +1,6 @@
 node_modules/
 dist/
+site/formats/
 .wrangler/
 .dev.vars
 *.local

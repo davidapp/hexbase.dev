@@ -1,5 +1,6 @@
-import { hex, parseHexInput, printable } from '@core/bytes'
+import { formatSize, hex, parseHexInput, printable } from '@core/bytes'
 import { decodePacket, FIRST_LAYER_CHOICES } from '@core/packet/decode'
+import { frameTime, looksLikePcap, parsePcapFile, type PcapFile } from '@core/packet/pcap'
 import { SAMPLE_PACKETS } from '@core/packet/samples'
 import type { LayerId } from '@core/packet/net'
 import { $, bindShare, el, HexView, initChrome, loadShare, RegionTree, renderResultHead, shareParam, showMsg, toast } from './ui'
@@ -24,6 +25,15 @@ tree.onSelect = (region) => hexview.highlight(region.offset, region.length)
 
 let currentBytes: Uint8Array | null = null
 
+function decodeFrame(bytes: Uint8Array, layer: LayerId | 'auto'): void {
+  currentBytes = bytes
+  const parsed = decodePacket(bytes, layer)
+  result.classList.remove('hidden')
+  renderResultHead(summary, parsed)
+  hexview.setData(bytes)
+  tree.set(parsed.regions)
+}
+
 function decode(): void {
   msg.className = 'msg hidden'
   let bytes: Uint8Array
@@ -38,12 +48,7 @@ function decode(): void {
     showMsg(msg, 'err', `${bytes.length} bytes is more than one packet — paste a single frame (≤128 KB)`)
     return
   }
-  currentBytes = bytes
-  const parsed = decodePacket(bytes, firstLayer.value as LayerId | 'auto')
-  result.classList.remove('hidden')
-  renderResultHead(summary, parsed)
-  hexview.setData(bytes)
-  tree.set(parsed.regions)
+  decodeFrame(bytes, firstLayer.value as LayerId | 'auto')
 }
 
 $('#decode').addEventListener('click', decode)
@@ -76,6 +81,117 @@ function toDump(bytes: Uint8Array): string {
   }
   return lines.join('\n')
 }
+
+// ---------------------------------------------------------------- pcap files
+
+const MAX_PCAP_BYTES = 32 * 1024 * 1024
+const BRIEF_LIMIT = 400 // decode this many frames for the list's summary column
+const ROW_LIMIT = 2000 // rows rendered in the list
+
+const pcapSection = $('#pcap-section')
+const pcapSummary = $('#pcap-summary')
+const pcapCount = $('#pcap-count')
+const framelist = $('#framelist')
+let capture: PcapFile | null = null
+let selectedRow: HTMLElement | null = null
+
+function frameBrief(i: number): string {
+  const f = capture!.frames[i]
+  if (i >= BRIEF_LIMIT) return `${f.bytes.length} bytes`
+  try {
+    const parsed = decodePacket(f.bytes, f.firstLayer)
+    return parsed.summary[parsed.summary.length - 1] ?? `${f.bytes.length} bytes`
+  } catch {
+    return `${f.bytes.length} bytes (decode failed)`
+  }
+}
+
+function selectFrame(i: number, row: HTMLElement): void {
+  const f = capture!.frames[i]
+  selectedRow?.classList.remove('sel')
+  row.classList.add('sel')
+  selectedRow = row
+  input.value = toDump(f.bytes)
+  // reflect the frame's first layer in the selector when it's an offered choice
+  if (FIRST_LAYER_CHOICES.some((c) => c.id === f.firstLayer)) firstLayer.value = f.firstLayer
+  msg.className = 'msg hidden'
+  decodeFrame(f.bytes, f.firstLayer)
+}
+
+function renderCapture(name: string, cap: PcapFile): void {
+  capture = cap
+  selectedRow = null
+  renderResultHead(pcapSummary, {
+    format: `${name} — ${cap.kind === 'pcapng' ? 'pcapng capture' : 'pcap capture'}`,
+    summary: cap.meta,
+    regions: [],
+    warnings: cap.warnings,
+  })
+  framelist.textContent = ''
+  const shown = Math.min(cap.frames.length, ROW_LIMIT)
+  pcapCount.textContent =
+    shown < cap.frames.length ? `showing ${shown} of ${cap.frames.length} frames` : `${cap.frames.length} frame${cap.frames.length === 1 ? '' : 's'}`
+  const firstTs = cap.frames.find((f) => f.tsSec > 0)?.tsSec ?? 0
+  const frag = document.createDocumentFragment()
+  for (let i = 0; i < shown; i++) {
+    const f = cap.frames[i]
+    const row = el('div', 'frow')
+    row.append(
+      el('span', 'fnum', String(f.index)),
+      el('span', 'ftime', frameTime(f, firstTs)),
+      el('span', 'flen', String(f.bytes.length)),
+      el('span', 'fs', frameBrief(i)),
+    )
+    row.addEventListener('click', () => selectFrame(i, row))
+    frag.append(row)
+  }
+  framelist.append(frag)
+  pcapSection.classList.remove('hidden')
+  if (cap.frames.length > 0) selectFrame(0, framelist.firstElementChild as HTMLElement)
+  else showMsg(msg, 'warn', 'capture file parsed, but it contains no frames')
+}
+
+function loadCaptureBytes(name: string, bytes: Uint8Array): void {
+  msg.className = 'msg hidden'
+  if (looksLikePcap(bytes)) {
+    try {
+      renderCapture(name, parsePcapFile(bytes))
+    } catch (e) {
+      showMsg(msg, 'err', e instanceof Error ? e.message : String(e))
+    }
+    return
+  }
+  // not a capture container — treat a small file as one raw frame
+  if (bytes.length <= 128 * 1024) {
+    pcapSection.classList.add('hidden')
+    capture = null
+    input.value = toDump(bytes)
+    decode()
+    toast(`${name}: not a pcap file — loaded as one raw frame`)
+  } else {
+    showMsg(msg, 'err', `${name} is not a pcap/pcapng capture (no magic bytes) and too large for a single frame`)
+  }
+}
+
+function handleFile(file: File): void {
+  if (file.size > MAX_PCAP_BYTES) {
+    showMsg(msg, 'err', `${file.name} is ${formatSize(file.size)} — the in-browser limit is ${formatSize(MAX_PCAP_BYTES)}`)
+    return
+  }
+  void file.arrayBuffer().then((buf) => loadCaptureBytes(file.name, new Uint8Array(buf)))
+}
+
+const pcapInput = $<HTMLInputElement>('#pcap-file')
+pcapInput.addEventListener('change', () => {
+  if (pcapInput.files?.[0]) handleFile(pcapInput.files[0])
+  pcapInput.value = ''
+})
+document.addEventListener('dragover', (e) => e.preventDefault())
+document.addEventListener('drop', (e) => {
+  e.preventDefault()
+  const file = e.dataTransfer?.files?.[0]
+  if (file) handleFile(file)
+})
 
 // share: store the raw bytes; on load, render a dump and decode
 bindShare($('#share'), 'packet', () => (currentBytes ? { bytes: currentBytes } : null))

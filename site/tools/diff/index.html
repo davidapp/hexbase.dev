@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>JSON Diff — structural compare with exact paths | hexbase.dev</title>
+    <meta name="description" content="Compare two JSON documents structurally: every added, removed, changed or re-typed value listed with its exact JSONPath. Plus a text mode with a minimal line diff. Runs locally — your documents are never uploaded." />
+    <link rel="canonical" href="https://hexbase.dev/tools/diff/" />
+    <meta property="og:title" content="JSON Diff — structural compare with exact paths" />
+    <meta property="og:description" content="See exactly what changed between two JSON documents — by path, not by line. Text mode included. Runs locally in your browser." />
+    <meta property="og:url" content="https://hexbase.dev/tools/diff/" />
+    <meta property="og:image" content="https://hexbase.dev/og/diff.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="JSON Diff — structural compare with exact paths" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/diff/#app",
+            "name": "JSON Diff",
+            "url": "https://hexbase.dev/tools/diff/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online JSON diff: compare two documents structurally and get every difference as an exact JSONPath — added, removed, changed or type-changed — independent of key order and formatting. Includes a minimal line diff for plain text. Runs locally.",
+            "featureList": [
+              "Structural JSON comparison — key order and formatting don't matter",
+              "Every difference reported with its exact JSONPath",
+              "Added / removed / changed / type-changed classification",
+              "Plain-text mode with a minimal (Myers) line diff",
+              "Swap sides, load a sample, share a comparison",
+              "Local-first: documents are compared in the browser and never uploaded"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "JSON Diff", "item": "https://hexbase.dev/tools/diff/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How is a structural JSON diff different from a text diff?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A text diff compares lines, so reformatting or reordering keys drowns you in noise. A structural diff parses both documents first and compares values by path: {\"a\":1,\"b\":2} and a pretty-printed {\"b\":2,\"a\":1} are identical structurally. You get a short list like $.user.age: 36 → 37 instead of pages of churn." }
+              },
+              {
+                "@type": "Question",
+                "name": "How are arrays compared?",
+                "acceptedAnswer": { "@type": "Answer", "text": "By index: element 3 on the left is compared with element 3 on the right. That means inserting one element near the front reports every later index as changed — the honest trade-off of index alignment. When element order doesn't matter in your data, sort both arrays first." }
+              },
+              {
+                "@type": "Question",
+                "name": "Does key order matter in JSON?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Not to the format: RFC 8259 defines objects as unordered, and this differ ignores order. But JavaScript engines preserve insertion order in practice, and some systems (signatures, canonical JSON, JCS) depend on a specific serialization — that's a property of those systems, not of JSON itself." }
+              },
+              {
+                "@type": "Question",
+                "name": "Is my data uploaded when I compare?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No — parsing and diffing run entirely in your browser. Only the optional Share button uploads the two documents (up to 256 KB combined), and those links expire after 30 days." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container wide">
+      <div class="page-head">
+        <h1>JSON Diff</h1>
+        <p class="sub">
+          Compare structure, not formatting. Both documents are parsed and walked together, so key order and
+          whitespace don't matter — you get the exact path of every real difference. A text mode with a minimal line
+          diff is included for everything that isn't JSON.
+        </p>
+      </div>
+
+      <div class="btn-row" style="margin-bottom: 12px">
+        <div class="tabs" style="margin: 0">
+          <button id="mode-json" aria-selected="true">json</button>
+          <button id="mode-text" aria-selected="false">text</button>
+        </div>
+        <span class="spacer" style="flex: 1"></span>
+        <button class="btn small" id="sample">sample</button>
+        <button class="btn small" id="swap" title="Swap left and right">⇄ swap</button>
+        <button class="btn small" id="clear">clear</button>
+        <button class="btn small" id="share" title="Upload both documents (≤256 KB) and get a 30-day link">share</button>
+      </div>
+
+      <div class="tool-grid">
+        <div>
+          <div class="pane-title"><span>left · original</span></div>
+          <textarea id="left" rows="14" spellcheck="false" placeholder='{"name": "ada", "age": 36}'></textarea>
+        </div>
+        <div>
+          <div class="pane-title"><span>right · modified</span></div>
+          <textarea id="right" rows="14" spellcheck="false" placeholder='{"name": "ada", "age": 37}'></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top: 10px">
+        <button class="btn primary" id="compare">compare</button>
+        <span id="diff-stats" style="font: 0.78rem var(--font-mono); color: var(--muted)"></span>
+      </div>
+      <div class="msg hidden" id="diff-msg"></div>
+
+      <section id="diff-result" class="hidden" style="margin-top: 14px">
+        <div class="pane-title"><span id="diff-title">differences</span><button class="btn small" id="copy-diff">copy</button></div>
+        <div id="diff-out"></div>
+      </section>
+
+      <section class="learn">
+        <h2>Reading a structural diff</h2>
+        <p>
+          Each line is one difference, addressed by <strong>JSONPath</strong>: <code>$</code> is the document root,
+          <code>.key</code> steps into an object, <code>[3]</code> into an array. Four things can happen to a value:
+        </p>
+        <table>
+          <thead><tr><th>Kind</th><th>Meaning</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>changed</td><td>same type, different value</td><td>$.user.age: 36 → 37</td></tr>
+            <tr><td>added</td><td>key or element only on the right</td><td>$.user.email: + "ada@example.com"</td></tr>
+            <tr><td>removed</td><td>key or element only on the left</td><td>$.legacy: − true</td></tr>
+            <tr><td>type</td><td>the value's type itself changed</td><td>$.id: 42 (number) → "42" (string)</td></tr>
+          </tbody>
+        </table>
+        <p class="dim">
+          Type changes get their own kind because they're the ones that break parsers downstream — an API quietly
+          turning a number into a string is exactly what you want to catch in a contract change.
+        </p>
+
+        <h2>Why "identical" can still look different</h2>
+        <p class="dim">
+          <code>{"a":1,"b":2}</code> and a pretty-printed <code>{"b":2,"a":1}</code> are the same document: RFC 8259
+          defines object members as unordered, and whitespace is insignificant. If a system treats those two as
+          different — canonical JSON, request signing, content hashes — that's a constraint the system adds on top of
+          JSON, and you need byte-level comparison (text mode) instead.
+        </p>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>How is a structural JSON diff different from a text diff?</h3>
+        <p>
+          A text diff compares lines, so reformatting or reordering keys drowns you in noise. A structural diff parses
+          both documents first and compares values by path: <code>{"a":1,"b":2}</code> and a pretty-printed
+          <code>{"b":2,"a":1}</code> are identical structurally. You get a short list like
+          <code>$.user.age: 36 → 37</code> instead of pages of churn.
+        </p>
+        <h3>How are arrays compared?</h3>
+        <p>
+          By index: element 3 on the left is compared with element 3 on the right. That means inserting one element
+          near the front reports every later index as changed — the honest trade-off of index alignment. When element
+          order doesn't matter in your data, sort both arrays first.
+        </p>
+        <h3>Does key order matter in JSON?</h3>
+        <p>
+          Not to the format: RFC 8259 defines objects as unordered, and this differ ignores order. But JavaScript
+          engines preserve insertion order in practice, and some systems (signatures, canonical JSON, JCS) depend on a
+          specific serialization — that's a property of those systems, not of JSON itself.
+        </p>
+        <h3>Is my data uploaded when I compare?</h3>
+        <p>
+          No — parsing and diffing run entirely in your browser. Only the optional <em>Share</em> button uploads the
+          two documents (up to 256&nbsp;KB combined), and those links expire after 30 days.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/diff.ts"></script>
+  </body>
+</html>

@@ -28,6 +28,12 @@ export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: numb
 // ---------------------------------------------------------------- chrome (header/theme/toast)
 
 export function initChrome(): void {
+  // offline support: visited pages and their assets keep working (see public/sw.js)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      /* http dev or unsupported — the site works without it */
+    })
+  }
   const path = location.pathname
   document.querySelectorAll<HTMLAnchorElement>('.site-nav a').forEach((a) => {
     if (path.startsWith(a.pathname) && a.pathname !== '/') a.setAttribute('aria-current', 'page')

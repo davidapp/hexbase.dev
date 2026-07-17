@@ -1,0 +1,9 @@
+Contact: mailto:support@hexbase.dev
+Expires: 2027-07-18T00:00:00.000Z
+Preferred-Languages: en, zh
+Canonical: https://hexbase.dev/.well-known/security.txt
+Policy: https://hexbase.dev/terms/
+
+# hexbase.dev is a local-first developer tool site. If you found a
+# vulnerability - in the share API, the worker, or a parser - we would
+# genuinely like to hear about it. Please allow a few days for a reply.
