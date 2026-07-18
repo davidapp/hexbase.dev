@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--#include:head-->
+    <title>Random Generator — hex, binary & decimal strings, 128 & 256-bit keys | hexbase.dev</title>
+    <meta name="description" content="Generate cryptographically secure random strings in hex, binary or decimal at any length — one-click presets for the 32- and 64-character hex keys (128/256-bit) used as API secrets and HMAC keys. Unbiased sampling from your browser's CSPRNG; nothing leaves your machine." />
+    <link rel="canonical" href="https://hexbase.dev/tools/random/" />
+    <meta property="og:title" content="Random Generator — hex, binary & decimal strings, 128 & 256-bit keys" />
+    <meta property="og:description" content="Cryptographically secure random hex, binary and decimal strings — presets for 32/64-char hex keys, entropy readout, unbiased sampling. Runs locally; keys never leave your browser." />
+    <meta property="og:url" content="https://hexbase.dev/tools/random/" />
+    <meta property="og:image" content="https://hexbase.dev/og/random.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Random Generator — hex, binary & decimal strings, 128 & 256-bit keys" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://hexbase.dev/tools/random/#app",
+            "name": "Random Generator",
+            "url": "https://hexbase.dev/tools/random/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "Online secure random string generator: hex, binary or decimal strings of any length up to 4096 characters, with one-click presets for 128-bit (32 hex chars) and 256-bit (64 hex chars) keys. Drawn from the browser's CSPRNG with rejection sampling — no modulo bias — and generated entirely locally.",
+            "featureList": [
+              "Hex, binary and decimal random strings of any length up to 4096 characters",
+              "One-click presets for 128-bit (32 hex) and 256-bit (64 hex) keys",
+              "Cryptographically secure: crypto.getRandomValues, never Math.random",
+              "Unbiased digits via rejection sampling",
+              "Live entropy readout in bits with brute-force time estimate",
+              "Batch generation with copy-all",
+              "Local-first: generated keys never leave the browser"
+            ],
+            "publisher": { "@type": "Organization", "name": "hexbase.dev", "url": "https://hexbase.dev/", "email": "support@hexbase.dev" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "hexbase.dev", "item": "https://hexbase.dev/" },
+              { "@type": "ListItem", "position": 2, "name": "Random Generator", "item": "https://hexbase.dev/tools/random/" }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is it safe to generate secret keys in a browser?",
+                "acceptedAnswer": { "@type": "Answer", "text": "For most uses, yes: this page draws from crypto.getRandomValues, the browser's cryptographically secure random number generator, which is fed by the operating system's entropy source. Generation happens entirely locally — the string is never transmitted, which you can verify in the network tab. For regulated or high-assurance environments, generate keys inside an HSM or your platform's key-management service instead." }
+              },
+              {
+                "@type": "Question",
+                "name": "How long should an API key or secret be?",
+                "acceptedAnswer": { "@type": "Answer", "text": "128 bits of entropy — 32 hex characters — is the accepted floor for anything that must resist brute force. HMAC-SHA-256 secrets should carry 256 bits (64 hex characters), matching the hash output size per RFC 2104 and RFC 7518. Beyond that, extra length adds nothing unless a specification demands it." }
+              },
+              {
+                "@type": "Question",
+                "name": "Why are keys usually 32 or 64 hex characters long?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A hex character carries exactly 4 bits, so 32 characters hold 128 bits and 64 characters hold 256 bits — the two standard symmetric key sizes (AES-128, AES-256, HMAC-SHA-256). The lengths look arbitrary in a config file, but they are just those key sizes written out in hex." }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I use Math.random() to generate keys?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. Math.random() is a fast statistical generator, not a cryptographic one: its internal state can be recovered from a handful of outputs, after which every past and future value is predictable. Use crypto.getRandomValues in JavaScript, secrets in Python, or SecureRandom in Java. This page never calls Math.random()." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <!--#include:header-->
+    <main class="container">
+      <div class="page-head">
+        <h1>Random Generator</h1>
+        <p class="sub">
+          A key is just a number nobody can guess. This page draws them from your browser's CSPRNG — the same well your
+          TLS session keys come from — as binary, decimal or hex strings, and tells you exactly how much entropy you're
+          holding. Everything happens locally; the keys never leave your machine.
+        </p>
+      </div>
+
+      <div class="card" style="margin-bottom: 18px">
+        <div class="tabs" id="base-tabs" style="margin-bottom: 14px">
+          <button data-base="16" aria-selected="true">hex · base 16</button>
+          <button data-base="2">binary · base 2</button>
+          <button data-base="10">decimal · base 10</button>
+        </div>
+        <div class="btn-row">
+          <label for="len" class="dim" style="font-size: 0.85rem">length</label>
+          <input type="number" id="len" min="1" max="4096" value="64" style="width: 90px" />
+          <button class="btn small len-preset" data-len="16">16</button>
+          <button class="btn small len-preset" data-len="32">32</button>
+          <button class="btn small len-preset" data-len="64">64</button>
+          <button class="btn small len-preset" data-len="128">128</button>
+          <button class="btn small len-preset" data-len="256">256</button>
+          <span class="dim" style="font-size: 0.85rem; margin-left: 8px">×</span>
+          <select id="count" title="How many strings to generate">
+            <option value="1">1</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+          </select>
+        </div>
+        <div class="checks" style="margin-top: 12px">
+          <label><input type="checkbox" id="grouped" /> group for readability (copies stay unbroken)</label>
+          <label id="upper-wrap"><input type="checkbox" id="upper" /> UPPERCASE</label>
+        </div>
+        <div class="btn-row" style="margin-top: 12px">
+          <button class="btn primary" id="generate">generate ⟳</button>
+          <button class="btn" id="copy-all">copy all</button>
+        </div>
+        <div class="msg hidden" id="rand-msg"></div>
+        <p class="dim" id="entropy-note" style="margin: 12px 0 0; font-size: 0.85rem"></p>
+      </div>
+
+      <div class="pane-title">
+        <span>key presets</span>
+        <span>set the controls and regenerate</span>
+      </div>
+      <div class="btn-row" style="margin-bottom: 18px">
+        <button class="btn small key-preset" data-base="16" data-len="32">128-bit key · 32 hex</button>
+        <button class="btn small key-preset" data-base="16" data-len="64">256-bit key · 64 hex</button>
+        <button class="btn small key-preset" data-base="16" data-len="128">512-bit token · 128 hex</button>
+        <button class="btn small key-preset" data-base="16" data-len="16">64-bit id · 16 hex</button>
+        <button class="btn small key-preset" data-base="10" data-len="6">6-digit code</button>
+        <button class="btn small key-preset" data-base="2" data-len="128">128 coin flips</button>
+      </div>
+
+      <div class="pane-title"><span>results</span><span>click any string to copy it</span></div>
+      <div id="results"></div>
+
+      <section class="learn">
+        <h2>How many bits is a character worth?</h2>
+        <p>
+          Entropy is counted in bits, and each character of a random string contributes log₂(alphabet size) of them.
+          That single fact explains every "standard" key length you've ever copy-pasted:
+        </p>
+        <table>
+          <thead>
+            <tr><th>Alphabet</th><th>Bits per char</th><th>Chars for 128 bits</th><th>Chars for 256 bits</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>binary (01)</td><td>1</td><td>128</td><td>256</td></tr>
+            <tr><td>decimal (0–9)</td><td>≈ 3.32</td><td>39</td><td>78</td></tr>
+            <tr><td>hex (0–9 a–f)</td><td>exactly 4</td><td><strong>32</strong></td><td><strong>64</strong></td></tr>
+            <tr><td>base64</td><td>6</td><td>22</td><td>43</td></tr>
+          </tbody>
+        </table>
+        <p class="dim">
+          Hex is the sweet spot for keys: exactly 4 bits per character, case-insensitive, safe in URLs, configs and
+          shell commands. That's why a 128-bit key is "32 hex chars" and a 256-bit key is "64 hex chars" — the sizes
+          aren't arbitrary, they're AES-128 and AES-256 written out.
+        </p>
+
+        <h2>Why 128 and 256 bits specifically</h2>
+        <p>
+          128 bits is where brute force stops being an engineering problem and becomes a physics problem — sweeping
+          2¹²⁸ keys at a trillion guesses per second takes about 10¹⁹ years, a billion times the age of the universe.
+          256 bits isn't there because 128 is weak; it buys margin against the unknown (Grover's algorithm on a future
+          quantum computer would halve the effective strength to a still-comfortable 128) and matches the output size
+          of SHA-256, which is why <a href="/tools/encode/?tab=jwt">HMAC-SHA-256 secrets</a> should carry 256 bits per
+          RFC 2104.
+        </p>
+
+        <h2><code>Math.random()</code> is not a key generator</h2>
+        <p>
+          <code>Math.random()</code> is built for speed, not secrecy: V8 runs xorshift128+, whose entire internal state
+          can be recovered from a few consecutive outputs — after that, every "random" value it will ever produce is
+          predictable. <code>crypto.getRandomValues()</code> instead drains the operating system's CSPRNG
+          (<code>getrandom(2)</code> on Linux, <code>BCryptGenRandom</code> on Windows), which is continuously reseeded
+          from hardware noise and designed so that observing outputs tells you nothing about the next one. This page
+          only ever calls the latter.
+        </p>
+
+        <h2>The modulo-bias trap</h2>
+        <p>
+          The classic bug in hand-rolled generators: take a random byte, compute <code>byte % 10</code>, call it a
+          digit. But 256 doesn't divide by 10 — the digits 0–5 each arrive from 26 byte values while 6–9 get only 25,
+          a 4% skew that compounds across a long key and fails randomness audits. The fix is
+          <em>rejection sampling</em>: throw away bytes ≥ 250 and roll again, so every digit is exactly equally
+          likely. This tool does that for decimal; binary and hex divide 256 evenly, so nothing needs rejecting.
+        </p>
+        <pre>byte:   0..249  → keep, digit = byte % 10   (25 bytes per digit — fair)
+byte: 250..255  → reject, draw a new byte    (~2.3% of draws)</pre>
+      </section>
+
+      <section class="learn" id="faq">
+        <h2>Frequently asked questions</h2>
+        <h3>Is it safe to generate secret keys in a browser?</h3>
+        <p>
+          For most uses, yes: this page draws from <code>crypto.getRandomValues</code>, the browser's cryptographically
+          secure generator, fed by the operating system's entropy source. Generation happens entirely locally — the
+          string is never transmitted, which you can verify in the network tab. For regulated or high-assurance
+          environments, generate keys inside an HSM or your platform's key-management service instead.
+        </p>
+        <h3>How long should an API key or secret be?</h3>
+        <p>
+          128 bits of entropy — 32 hex characters — is the accepted floor for anything that must resist brute force.
+          HMAC-SHA-256 secrets should carry 256 bits (64 hex characters), matching the hash output size per RFC 2104
+          and RFC 7518. Beyond that, extra length adds nothing unless a specification demands it.
+        </p>
+        <h3>Why are keys usually 32 or 64 hex characters long?</h3>
+        <p>
+          A hex character carries exactly 4 bits, so 32 characters hold 128 bits and 64 characters hold 256 bits — the
+          two standard symmetric key sizes (AES-128, AES-256, HMAC-SHA-256). The lengths look arbitrary in a config
+          file, but they're just those key sizes written out in hex.
+        </p>
+        <h3>Can I use <code>Math.random()</code> to generate keys?</h3>
+        <p>
+          No. <code>Math.random()</code> is a fast statistical generator, not a cryptographic one: its internal state
+          can be recovered from a handful of outputs, after which every past and future value is predictable. Use
+          <code>crypto.getRandomValues</code> in JavaScript, <code>secrets</code> in Python, or
+          <code>SecureRandom</code> in Java.
+        </p>
+      </section>
+    </main>
+    <!--#include:footer-->
+    <script type="module" src="/js/random.ts"></script>
+  </body>
+</html>

@@ -20,6 +20,7 @@ Key facts:
 - [Timestamp Converter](https://hexbase.dev/tools/timestamp/): Convert any number or ISO 8601 string between Unix seconds/milliseconds/microseconds/nanoseconds, Windows FILETIME, .NET ticks, NTP, Excel serial dates, HFS+ (1904), Apple Cocoa (2001) and GPS time — readings ranked by plausibility. Deep-linkable: /tools/timestamp/?t=1700000000.
 - [Encode / Decode](https://hexbase.dev/tools/encode/): Base64 and Base64URL, URL percent-encoding, HTML entities, hex/binary, Unicode escapes with a per-code-point inspector, JWT decoding with claim explanations and local HS256 verification, MD5/SHA-1/SHA-256/384/512 hashes. Deep-linkable tabs: /tools/encode/?tab=jwt.
 - [Certificate Decoder](https://hexbase.dev/tools/cert/): Paste PEM or drop a DER file — subject, issuer, validity with expiry countdown, key algorithm and size (RSA bits / EC curve / Ed25519), SANs, key usage, extensions, Certificate Transparency SCTs, SHA-256/SHA-1 fingerprints, and the full ASN.1 tree mapped byte-by-byte onto a hex view. Any DER blob gets a generic ASN.1 tree.
+- [Random Generator](https://hexbase.dev/tools/random/): Cryptographically secure random strings in hex, binary or decimal, 1–4096 characters, generated locally with crypto.getRandomValues (never Math.random) and unbiased rejection sampling. One-click presets for 128-bit (32 hex) and 256-bit (64 hex) keys, 6-digit codes, batch generation, entropy readout in bits with brute-force time estimate. Deep-linkable: /tools/random/?base=16&len=64.
 
 ## File format guides
 

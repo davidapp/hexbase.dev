@@ -60,6 +60,7 @@ export default defineConfig({
         packet: resolve(site, 'tools/packet/index.html'),
         diff: resolve(site, 'tools/diff/index.html'),
         cert: resolve(site, 'tools/cert/index.html'),
+        random: resolve(site, 'tools/random/index.html'),
         ...formatPageInputs(),
       },
     },

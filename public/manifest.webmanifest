@@ -1,7 +1,7 @@
 {
   "name": "hexbase.dev — inspect the bytes",
   "short_name": "hexbase",
-  "description": "Local-first developer tools for binary files, network packets, JSON, XML, timestamps, encodings, diffs and certificates. Works offline once visited.",
+  "description": "Local-first developer tools for binary files, network packets, JSON, XML, timestamps, encodings, diffs, certificates and random keys. Works offline once visited.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

@@ -281,6 +281,7 @@ function sitemap() {
     { loc: '/tools/xml/', pri: '0.8' },
     { loc: '/tools/timestamp/', pri: '0.9' },
     { loc: '/tools/encode/', pri: '0.9' },
+    { loc: '/tools/random/', pri: '0.9' },
     { loc: '/formats/', pri: '0.8' },
     ...FORMAT_PAGES.map((f) => ({ loc: `/formats/${f.slug}/`, pri: '0.7' })),
     { loc: '/links/', pri: '0.6' },

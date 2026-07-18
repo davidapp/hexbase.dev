@@ -16,6 +16,7 @@ Built for Cloudflare Workers with D1, R2 and KV.
 | Encode / Decode | `/tools/encode/` | Base64 (+URL-safe), URL, HTML entities, hex/binary, Unicode escapes + per-code-point inspector, JWT decode + HS256 verify, MD5/SHA-1/SHA-256/384/512 |
 | JSON Diff | `/tools/diff/` | Structural diff (added/removed/changed/type-changed with exact JSONPaths, key order ignored) + Myers line diff for text mode |
 | Certificate Decoder | `/tools/cert/` | PEM/base64/DER in → subject, issuer, validity countdown, key size (RSA/EC/Ed25519), SANs, key usage, SCTs, fingerprints, full ASN.1 tree with byte-level hex highlighting; generic DER view for non-certificates |
+| Random Generator | `/tools/random/` | CSPRNG hex/binary/decimal strings (1–4096 chars, unbiased via rejection sampling), presets for 128/256-bit keys (32/64 hex), entropy + brute-force-time readout, batch + copy-all |
 | File format guides | `/formats/` | 21 generated landing pages (magic bytes, structure tables, quirks, FAQ, demo deep-links) from `scripts/format-content-*.mjs` via `scripts/make-format-pages.mjs`, which also emits `sitemap.xml` |
 | Developer Links | `/links/` | Curated portal (D1-backed, KV-cached) of standards, playgrounds, networking/security tools, registries |
 

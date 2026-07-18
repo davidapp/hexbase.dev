@@ -3,7 +3,7 @@
   <head>
     <!--#include:head-->
     <title>hexbase.dev — inspect the bytes</title>
-    <meta name="description" content="Developer tools that show you what your data is made of: binary file inspector, packet & pcap decoder, JSON/XML formatters, JSON diff, timestamp converter, encoders, certificate decoder — all running locally in your browser, each one a small lesson in its format." />
+    <meta name="description" content="Developer tools that show you what your data is made of: binary file inspector, packet & pcap decoder, JSON/XML formatters, JSON diff, timestamp converter, encoders, certificate decoder, random key generator — all running locally in your browser, each one a small lesson in its format." />
     <link rel="canonical" href="https://hexbase.dev/" />
     <meta property="og:title" content="hexbase.dev — inspect the bytes" />
     <meta property="og:description" content="Binary inspector, packet decoder, JSON/XML/timestamp/encoding tools. Local-first, built to teach." />
@@ -47,8 +47,9 @@
               { "@type": "ListItem", "position": 6, "name": "Timestamp Converter — Unix, FILETIME, NTP, Excel, GPS", "url": "https://hexbase.dev/tools/timestamp/" },
               { "@type": "ListItem", "position": 7, "name": "Encode / Decode — Base64, URL, JWT, hashes", "url": "https://hexbase.dev/tools/encode/" },
               { "@type": "ListItem", "position": 8, "name": "Certificate Decoder — X.509 and ASN.1, byte by byte", "url": "https://hexbase.dev/tools/cert/" },
-              { "@type": "ListItem", "position": 9, "name": "File format guides — 21 binary formats explained", "url": "https://hexbase.dev/formats/" },
-              { "@type": "ListItem", "position": 10, "name": "Developer Links — curated reference directory", "url": "https://hexbase.dev/links/" }
+              { "@type": "ListItem", "position": 9, "name": "Random Generator — secure hex, binary, decimal keys", "url": "https://hexbase.dev/tools/random/" },
+              { "@type": "ListItem", "position": 10, "name": "File format guides — 21 binary formats explained", "url": "https://hexbase.dev/formats/" },
+              { "@type": "ListItem", "position": 11, "name": "Developer Links — curated reference directory", "url": "https://hexbase.dev/links/" }
             ]
           }
         ]
@@ -113,6 +114,11 @@
           <p>Paste a PEM or drop a DER file: subject, issuer, validity countdown, SANs, key size — and the full ASN.1 tree mapped onto the actual bytes.</p>
           <span class="tc-eg">CN=example.com · valid, 42 days remaining</span>
         </a>
+        <a class="tool-card" href="/tools/random/">
+          <div class="tc-head"><span class="tc-icon">⚄</span><h3>Random Generator</h3></div>
+          <p>Cryptographically secure random strings in hex, binary or decimal — one click for the 32- and 64-char hex keys you actually need, with the entropy math shown.</p>
+          <span class="tc-eg">64 hex chars → 256-bit key</span>
+        </a>
       </section>
 
       <section class="feature-strip" id="about">
@@ -138,6 +144,7 @@
           <li>Signed 32-bit Unix time overflows on <code>2038-01-19 03:14:07 UTC</code>. <a href="/tools/timestamp/">The Y2038 problem →</a></li>
           <li>The hostname you visit travels unencrypted inside a TLS ClientHello (SNI). <a href="/tools/packet/">Decode one →</a></li>
           <li>Base64 grows data by exactly 4/3 — three bytes become four characters. <a href="/tools/encode/">Why →</a></li>
+          <li>A 64-char hex key holds 256 bits — sweeping that keyspace outlasts the universe 10⁴⁷ times over. <a href="/tools/random/">Generate one →</a></li>
           <li>Every format opens with a promise about what follows. <a href="/formats/">Field guides to 21 of them →</a></li>
         </ul>
       </section>
