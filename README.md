@@ -75,3 +75,10 @@ Config lives in `wrangler.jsonc`: assets serving with `run_worker_first` for `/a
 ## Share links
 
 `POST /api/share` accepts `{ tool, content (base64), filename? }` up to 256 KB, rate-limited to 30/h per hashed IP (raw IPs are never stored). Content lives in R2, metadata in D1, links expire after 30 days and are purged nightly by the cron trigger.
+
+## License
+
+- **Code** — [MIT](LICENSE). Everything that executes: `src/`, `site/` markup and scripts, the worker, build scripts, tests, demo specimens.
+- **Educational content** — the teaching prose is licensed [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/), not MIT. That covers the format guides (the text in `scripts/format-content-*.mjs`), the "§ Learn" and FAQ sections in the pages, and `llms.txt`. In short: quote it with attribution all you like, but don't republish the guides wholesale or sell them.
+
+Security reports: see [SECURITY.md](SECURITY.md) or <https://hexbase.dev/.well-known/security.txt>.

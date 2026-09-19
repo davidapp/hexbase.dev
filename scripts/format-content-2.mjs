@@ -1,4 +1,5 @@
-/** Format guide content: executables, data & media. Prose may use <code>/<strong>/<em>/<a>. */
+/** Format guide content: executables, data & media. Prose may use <code>/<strong>/<em>/<a>.
+ *  The prose in this file is CC BY-NC-ND 4.0 (not MIT) — see README "License". */
 export const FORMAT_PAGES_2 = [
   {
     slug: 'elf',
