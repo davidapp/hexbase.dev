@@ -127,7 +127,10 @@ async function workerHeartbeat() {
   const n = Number(count[0]?.n ?? 0)
   const lastRaw = last[0]?.last
   const lastAt = lastRaw ? new Date(String(lastRaw).replace(' ', 'T') + (String(lastRaw).endsWith('Z') ? '' : 'Z')) : null
-  const minutesAgo = lastAt && !Number.isNaN(lastAt.getTime()) ? Math.round((Date.now() - lastAt.getTime()) / 60000) : null
+  // MAX() over an empty dataset comes back as the epoch, not NULL — treat anything
+  // before this feature shipped as "no heartbeat yet".
+  const valid = lastAt !== null && !Number.isNaN(lastAt.getTime()) && lastAt.getTime() > Date.UTC(2026, 0, 1)
+  const minutesAgo = valid ? Math.round((Date.now() - lastAt.getTime()) / 60000) : null
   return { count: n, minutesAgo, ok: minutesAgo !== null && minutesAgo <= 15 }
 }
 
