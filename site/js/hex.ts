@@ -23,6 +23,31 @@ tree.onSelect = (region) => hexview.highlight(region.offset, region.length)
 
 let current: { bytes: Uint8Array; name: string } | null = null
 
+/** Parser id → the /formats/ guide that explains it (detect-only stubs have none). */
+const FORMAT_GUIDES: Record<string, { slug: string; name: string }> = {
+  png: { slug: 'png', name: 'PNG' },
+  jpeg: { slug: 'jpeg', name: 'JPEG' },
+  gif: { slug: 'gif', name: 'GIF' },
+  bmp: { slug: 'bmp', name: 'BMP' },
+  icns: { slug: 'icns', name: 'icns' },
+  zip: { slug: 'zip', name: 'ZIP' },
+  gzip: { slug: 'gzip', name: 'gzip' },
+  tar: { slug: 'tar', name: 'tar' },
+  xar: { slug: 'xar', name: 'xar' },
+  dmg: { slug: 'dmg', name: 'DMG' },
+  elf: { slug: 'elf', name: 'ELF' },
+  pe: { slug: 'pe', name: 'PE' },
+  macho: { slug: 'mach-o', name: 'Mach-O' },
+  class: { slug: 'java-class', name: 'Java class' },
+  wasm: { slug: 'wasm', name: 'WASM' },
+  bplist: { slug: 'binary-plist', name: 'binary plist' },
+  applefork: { slug: 'appledouble', name: 'AppleDouble' },
+  sqlite: { slug: 'sqlite', name: 'SQLite' },
+  pdf: { slug: 'pdf', name: 'PDF' },
+  riff: { slug: 'wav', name: 'WAV' },
+  mp4: { slug: 'mp4', name: 'MP4' },
+}
+
 function analyze(bytes: Uint8Array, name: string): void {
   current = { bytes, name }
   result.classList.remove('hidden')
@@ -51,6 +76,12 @@ function analyze(bytes: Uint8Array, name: string): void {
   parsed.summary.push(`${formatSize(bytes.length)} · entropy ${ent.toFixed(2)} bits/byte${ent > 7.8 ? ' (compressed or encrypted-looking)' : ent < 3 ? ' (highly regular)' : ''}`)
 
   renderResultHead(summary, parsed)
+  const guide = format ? FORMAT_GUIDES[format.id] : undefined
+  if (guide) {
+    const link = el('a', 'guide-link', `Read the ${guide.name} format guide →`) as HTMLAnchorElement
+    link.href = `/formats/${guide.slug}/`
+    summary.append(link)
+  }
   fileinfo.textContent = `${name} · ${formatSize(bytes.length)}`
   hexview.setData(bytes)
   tree.set(parsed.regions)

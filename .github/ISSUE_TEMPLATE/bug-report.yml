@@ -1,0 +1,35 @@
+name: Bug report
+description: Something else is broken — UI, share links, offline mode, a page
+title: "[bug] <short description>"
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: For wrong parser output use the **Parser bug** template instead — it asks for the specimen we'll need.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open /tools/…
+        2. Click …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs. actual
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Browser / OS
+      placeholder: e.g. Firefox 143 on macOS 26, installed as PWA
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: DevTools → Console, anything red.
+      render: text

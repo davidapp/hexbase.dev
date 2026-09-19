@@ -6,6 +6,7 @@
  * Content lives in format-content-*.mjs; this file is only the template.
  * Output goes to site/formats/** (gitignored — regenerated on every build).
  */
+import { execSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -270,26 +271,56 @@ ${sections}
 `
 }
 
+/**
+ * Honest <lastmod>: the date of the last commit that touched the sources a
+ * page is built from (CI checks out full history for this). Falls back to the
+ * fixed PUBLISHED date when git is unavailable or the paths have no history.
+ */
+function gitDate(paths) {
+  try {
+    const out = execSync(`git log -1 --format=%cs -- ${paths.map((p) => JSON.stringify(p)).join(' ')}`, {
+      cwd: root,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim()
+    return /^\d{4}-\d{2}-\d{2}$/.test(out) ? out : PUBLISHED
+  } catch {
+    return PUBLISHED
+  }
+}
+
+const CONTENT_FILES = ['scripts/format-content-1.mjs', 'scripts/format-content-2.mjs']
+const tool = (name, pri, extra = []) => ({
+  loc: `/tools/${name}/`,
+  pri,
+  src: [`site/tools/${name}/index.html`, `site/js/${name}.ts`, ...extra],
+})
+
 function sitemap() {
   const items = [
-    { loc: '/', pri: '1.0' },
-    { loc: '/tools/hex/', pri: '0.9' },
-    { loc: '/tools/packet/', pri: '0.9' },
-    { loc: '/tools/json/', pri: '0.9' },
-    { loc: '/tools/diff/', pri: '0.9' },
-    { loc: '/tools/cert/', pri: '0.9' },
-    { loc: '/tools/xml/', pri: '0.8' },
-    { loc: '/tools/timestamp/', pri: '0.9' },
-    { loc: '/tools/encode/', pri: '0.9' },
-    { loc: '/tools/random/', pri: '0.9' },
-    { loc: '/formats/', pri: '0.8' },
-    ...FORMAT_PAGES.map((f) => ({ loc: `/formats/${f.slug}/`, pri: '0.7' })),
-    { loc: '/links/', pri: '0.6' },
-    { loc: '/terms/', pri: '0.3' },
-    { loc: '/privacy/', pri: '0.3' },
+    { loc: '/', pri: '1.0', src: ['site/index.html'] },
+    tool('hex', '0.9', ['src/core/formats']),
+    tool('packet', '0.9', ['src/core/packet']),
+    tool('json', '0.9', ['src/core/jsonTool.ts']),
+    tool('diff', '0.9', ['src/core/jsonDiff.ts']),
+    tool('cert', '0.9', ['src/core/asn1.ts', 'src/core/x509.ts']),
+    tool('xml', '0.8'),
+    tool('timestamp', '0.9'),
+    tool('encode', '0.9', ['src/core/encode.ts', 'src/core/jwt.ts']),
+    tool('random', '0.9', ['src/core/random.ts']),
+    { loc: '/formats/', pri: '0.8', src: ['scripts/make-format-pages.mjs', ...CONTENT_FILES] },
+    ...FORMAT_PAGES.map((f) => ({
+      loc: `/formats/${f.slug}/`,
+      pri: '0.7',
+      src: [FORMAT_PAGES_1.includes(f) ? CONTENT_FILES[0] : CONTENT_FILES[1]],
+    })),
+    { loc: '/links/', pri: '0.6', src: ['site/links/index.html', 'schema.sql'] },
+    { loc: '/terms/', pri: '0.3', src: ['site/terms/index.html'] },
+    { loc: '/privacy/', pri: '0.3', src: ['site/privacy/index.html'] },
   ]
   const body = items
-    .map((i) => `  <url><loc>${SITE}${i.loc}</loc><lastmod>${PUBLISHED}</lastmod><priority>${i.pri}</priority></url>`)
+    .map((i) => `  <url><loc>${SITE}${i.loc}</loc><lastmod>${gitDate(i.src)}</lastmod><priority>${i.pri}</priority></url>`)
     .join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
 }

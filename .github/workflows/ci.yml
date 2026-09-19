@@ -1,17 +1,25 @@
-name: Deploy
+name: CI
 
+# Pull-request checks. Needs no secrets, so it runs for forks too.
+# Deployment is a separate workflow (deploy.yml) that only runs on main.
 on:
-  push:
-    branches: [main]
+  pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  deploy:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history: sitemap <lastmod> comes from git dates
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -28,11 +36,3 @@ jobs:
       - run: npm run typecheck
 
       - run: npm run build
-
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Notify IndexNow (best-effort)
-        run: node scripts/indexnow.mjs || true

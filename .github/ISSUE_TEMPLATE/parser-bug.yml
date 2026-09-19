@@ -1,0 +1,59 @@
+name: Parser bug
+description: A file, packet, certificate or document is parsed wrongly, incompletely, or crashes a tool
+title: "[parser] <format>: <what went wrong>"
+labels: [bug, parser]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks — parser bugs are the most useful reports we get. **A specimen that reproduces it is worth more than any description.**
+
+        ⚠️ Everything on hexbase.dev runs locally, but a GitHub issue is public: never attach real packet captures, certificates with private data, tokens, or files you can't share. Trim to the smallest reproducing input, or synthesize one.
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool
+      options:
+        - Hex inspector (file format parser)
+        - Packet decoder (hex dump or pcap)
+        - Certificate decoder (X.509 / ASN.1)
+        - JSON toolkit / diff
+        - XML toolkit
+        - Timestamp converter
+        - Encode / decode
+        - Random generator
+    validations:
+      required: true
+  - type: input
+    id: format
+    attributes:
+      label: Format / protocol
+      placeholder: e.g. PNG, pcapng, ECDSA certificate, DNS over UDP
+    validations:
+      required: true
+  - type: textarea
+    id: specimen
+    attributes:
+      label: Reproducing input
+      description: Attach a minimal file (drag & drop) or paste a hex dump / PEM. Say how it was produced if you can (tool + version).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      placeholder: e.g. "the IHDR chunk should show 640×480" / "the SAN list should include *.example.com"
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Copy the summary card / warning text, or describe the wrong value. Include the browser console output if the tool threw.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: e.g. Chrome 140 / Firefox 143 / Safari 26

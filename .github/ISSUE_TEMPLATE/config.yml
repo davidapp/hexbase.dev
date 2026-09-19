@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/davidapp/hexbase.dev/blob/main/SECURITY.md
+    about: Please do not open a public issue — email support@hexbase.dev (see SECURITY.md).
+  - name: Question or feedback
+    url: mailto:support@hexbase.dev
+    about: Anything that isn't a bug or a feature request.

@@ -1,6 +1,14 @@
 import { Hono } from 'hono'
+import { withSecurityHeaders } from './headers'
 
 const app = new Hono<{ Bindings: Env }>()
+
+// Security headers on every response that passes through the Worker (pages,
+// API, redirects); see headers.ts for the policy.
+app.use('*', async (c, next) => {
+  await next()
+  c.res = withSecurityHeaders(c.res)
+})
 
 const SHARE_TOOLS: Record<string, string> = {
   json: '/tools/json/',
@@ -154,10 +162,11 @@ app.get('/s/:code', async (c) => {
 })
 
 /** Aggregate, anonymous page-view counting: path + country, nothing else.
- *  Only HTML routes reach the Worker (see run_worker_first) — static assets
- *  are served straight from the edge and are not counted. */
-function countPageView(c: { env: Env; req: { raw: Request; path: string; method: string } }): void {
+ *  Counts successful HTML documents only — root-level files (sitemap,
+ *  robots, sw.js…) pass through the Worker too but are not page views. */
+function countPageView(c: { env: Env; req: { raw: Request; path: string; method: string } }, res: Response): void {
   if (c.req.method !== 'GET' || !c.env.METRICS) return
+  if (res.status !== 200 || !(res.headers.get('content-type') ?? '').includes('text/html')) return
   try {
     const country = (c.req.raw.cf?.country as string | undefined) ?? 'XX'
     c.env.METRICS.writeDataPoint({
@@ -170,14 +179,16 @@ function countPageView(c: { env: Env; req: { raw: Request; path: string; method:
   }
 }
 
-app.notFound((c) => {
+app.notFound(async (c) => {
   if (c.req.path.startsWith('/api/')) {
     return c.json({ error: 'not found' }, 404)
   }
-  // An HTML page route (run_worker_first) falling through to static assets:
-  // count it, then serve the built site (including its 404 page).
-  countPageView(c)
-  return c.env.ASSETS.fetch(c.req.raw)
+  // Everything except the hashed asset directories runs the Worker first (see
+  // wrangler.jsonc): serve the built site (including its 404 page) and count
+  // the successful HTML pages.
+  const res = await c.env.ASSETS.fetch(c.req.raw)
+  countPageView(c, res)
+  return res
 })
 
 app.onError((err, c) => {

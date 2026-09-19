@@ -9,13 +9,6 @@
 <meta property="og:site_name" content="hexbase.dev" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
-<script>
-  ;(function () {
-    try {
-      var t = localStorage.getItem('hexbase-theme')
-      if (t === 'light' || (!t && window.matchMedia('(prefers-color-scheme: light)').matches)) {
-        document.documentElement.dataset.theme = 'light'
-      }
-    } catch (e) {}
-  })()
-</script>
+<!-- theme bootstrap: kept on ONE line with no surrounding whitespace so its CSP hash
+     (src/worker/headers.ts, checked by test/headers.test.ts) is stable across platforms -->
+<script>(function(){try{var t=localStorage.getItem('hexbase-theme');if(t==='light'||(!t&&matchMedia('(prefers-color-scheme: light)').matches))document.documentElement.dataset.theme='light'}catch(e){}})()</script>

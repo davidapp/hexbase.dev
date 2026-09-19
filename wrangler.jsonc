@@ -5,16 +5,17 @@
   "compatibility_date": "2026-07-01",
   "compatibility_flags": ["nodejs_compat"],
 
-  // Static site built by Vite into ./dist. Asset requests are served directly
-  // from the edge; the API, share links and HTML page routes run the Worker
-  // first (pages pass through it so views can be counted server-side — no
-  // client-side analytics script exists).
+  // Static site built by Vite into ./dist. Everything except the immutable,
+  // content-hashed asset directories runs the Worker first: HTML pages get
+  // security headers and are counted server-side (no client-side analytics
+  // script exists); hashed assets, demo specimens, OG cards and icons are
+  // served straight from the edge.
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
-    "run_worker_first": ["/api/*", "/s/*", "/", "/tools/*", "/formats/*", "/links/", "/terms/", "/privacy/"]
+    "run_worker_first": ["/*", "!/assets/*", "!/demo/*", "!/og/*", "!/icons/*"]
   },
 
   // Privacy-preserving usage metrics: aggregate page-view counts (path +

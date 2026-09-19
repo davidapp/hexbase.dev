@@ -1,0 +1,27 @@
+name: Feature request
+description: A new parser, protocol, tool or improvement
+title: "[feature] <short description>"
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Looking for something to build? Formats the hex inspector can *identify* but not yet *walk* are listed as `good first issue` — see CONTRIBUTING.md for the four-piece recipe (parser + specimen + tests + guide).
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do?
+      description: For a new format or protocol, link the spec if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is it useful?
+      placeholder: Who hits this, and what do they do today instead?
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to implement this myself

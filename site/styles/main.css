@@ -1005,6 +1005,13 @@ table.kv .dim {
   margin-top: 4px;
 }
 
+.card .guide-link {
+  display: inline-block;
+  margin-top: 8px;
+  font: 0.8rem var(--font-mono);
+  color: var(--accent);
+}
+
 /* ---------------- format guide pages ---------------- */
 
 .crumbs {
