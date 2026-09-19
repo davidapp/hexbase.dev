@@ -8,6 +8,7 @@ Key facts:
 - No accounts, no cookies, no ads, no client-side analytics scripts. Page views are counted server-side in aggregate (URL path + country only — no IPs, no identifiers).
 - The only upload is the optional "Share" button: content up to 256 KB becomes a short link that expires after 30 days and is then permanently deleted.
 - Installable PWA: pages you have visited keep working offline — useful in air-gapped environments.
+- Open source: the code is MIT-licensed at https://github.com/davidapp/hexbase.dev, so the local-first claim can be verified by reading it; the educational prose is CC BY-NC-ND 4.0.
 - Contact: support@hexbase.dev · Security reports: https://hexbase.dev/.well-known/security.txt
 
 ## Tools

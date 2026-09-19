@@ -109,7 +109,7 @@ async function edgeProbe() {
       ok,
       status: res.status,
       ms,
-      error: blocked ? `blocked by Cloudflare bot protection (${res.headers.get('cf-mitigated') ?? 'runner IP'})` : undefined,
+      error: blocked ? `被 Cloudflare 机器人防护拦截（${res.headers.get('cf-mitigated') ?? 'runner IP'}）— 是探针被拦，不是站点故障` : undefined,
     }
   } catch (e) {
     return { ok: false, status: 0, ms: Date.now() - t0, error: e instanceof Error ? e.message : String(e) }
@@ -170,42 +170,44 @@ async function github() {
 const settle = (p) => p.then((v) => v).catch((e) => ({ error: e instanceof Error ? e.message : String(e) }))
 const [v, s, h, g] = await Promise.all([settle(views()), settle(shares()), settle(health()), settle(github())])
 
-const date = new Date().toISOString().slice(0, 10)
+// The digest is written in Chinese for the operator's Slack channel; the
+// date is the Beijing calendar day the 09:00 (Asia/Shanghai) post lands on.
+const date = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date())
 const lines = []
 
-if (v.error) lines.push(`*Views:* unavailable — ${v.error}`)
+if (v.error) lines.push(`*浏览量*：不可用 — ${v.error}`)
 else {
-  lines.push(`*Views (24h):* ${fmt(v.day)}  ·  *7d:* ${fmt(v.week)}`)
-  if (v.paths.length) lines.push('*Top pages:* ' + v.paths.map((p) => `\`${p.path}\` ${fmt(p.views)}`).join(' · '))
-  if (v.countries.length) lines.push('*Countries:* ' + v.countries.map((c) => `${c.country} ${pct(c.views, v.day)}`).join(' · '))
+  lines.push(`*浏览量*：过去 24 小时 ${fmt(v.day)}  ·  最近 7 天 ${fmt(v.week)}`)
+  if (v.paths.length) lines.push('*热门页面*：' + v.paths.map((p) => `\`${p.path}\` ${fmt(p.views)}`).join(' · '))
+  if (v.countries.length) lines.push('*访客地区*：' + v.countries.map((c) => `${c.country} ${pct(c.views, v.day)}`).join(' · '))
 }
-if (s.error) lines.push(`*Shares:* unavailable — ${s.error}`)
-else lines.push(`*Shares:* ${fmt(s.created)} created today  ·  ${fmt(s.active)} active`)
+if (s.error) lines.push(`*分享链接*：不可用 — ${s.error}`)
+else lines.push(`*分享链接*：今日新建 ${fmt(s.created)}  ·  有效 ${fmt(s.active)}`)
 {
   const hb = h.heartbeat
   const probe = h.probe
   const hbText = hb.error
-    ? `heartbeat unavailable (${hb.error})`
+    ? `心跳数据不可用（${hb.error}）`
     : hb.minutesAgo === null
-      ? 'no heartbeat yet'
-      : `worker heartbeat ${fmt(hb.count)}/288 in 24h, last ${hb.minutesAgo} min ago`
+      ? '尚无心跳记录'
+      : `Worker 心跳 24 小时内 ${fmt(hb.count)}/288 次，最近一次 ${hb.minutesAgo} 分钟前`
   const probeText = probe.ok
-    ? `edge /api/health ${probe.ms} ms`
-    : `edge probe ${probe.error ?? `HTTP ${probe.status || 'unreachable'}`}`
-  lines.push(`*Health:* ${hb.ok || probe.ok ? '✅' : '🔴'} ${hbText}  ·  ${probeText}`)
+    ? `边缘探针 /api/health ${probe.ms} ms`
+    : `边缘探针 ${probe.error ?? `HTTP ${probe.status || '不可达'}`}`
+  lines.push(`*健康状况*：${hb.ok || probe.ok ? '✅' : '🔴'} ${hbText}  ·  ${probeText}`)
 }
-if (g.error) lines.push(`*GitHub:* unavailable — ${g.error}`)
-else lines.push(`*GitHub:* ★ ${fmt(g.stars)}${g.newStars ? ` (+${g.newStars})` : ''}  ·  ${g.openIssues} open issues  ·  ${g.openPRs} open PRs  ·  ${g.forks} forks`)
+if (g.error) lines.push(`*GitHub*：不可用 — ${g.error}`)
+else lines.push(`*GitHub*：★ ${fmt(g.stars)}${g.newStars ? `（+${g.newStars}）` : ''}  ·  未关闭 issue ${g.openIssues}  ·  待处理 PR ${g.openPRs}  ·  fork ${g.forks}`)
 
-const text = `hexbase.dev daily — ${date}\n` + lines.map((l) => l.replaceAll('*', '')).join('\n')
+const text = `hexbase.dev 每日运营简报 — ${date}\n` + lines.map((l) => l.replaceAll('*', '')).join('\n')
 const payload = {
   text,
   blocks: [
-    { type: 'header', text: { type: 'plain_text', text: `📊 hexbase.dev daily — ${date}` } },
+    { type: 'header', text: { type: 'plain_text', text: `📊 hexbase.dev 每日运营简报 — ${date}` } },
     { type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } },
     {
       type: 'context',
-      elements: [{ type: 'mrkdwn', text: `<${SITE}|hexbase.dev> · <https://github.com/${REPO}|GitHub> · views are aggregate path+country counts, no user data` }],
+      elements: [{ type: 'mrkdwn', text: `<${SITE}|hexbase.dev> · <https://github.com/${REPO}|GitHub> · 浏览量为按路径 + 国家的聚合计数，不含任何用户数据` }],
     },
   ],
 }
