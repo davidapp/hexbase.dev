@@ -10,9 +10,8 @@
     "noEmit": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
-      "@core/*": ["src/core/*"]
+      "@core/*": ["./src/core/*"]
     }
   },
   "include": ["src/worker", "src/core", "worker-configuration.d.ts"]

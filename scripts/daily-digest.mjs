@@ -171,6 +171,7 @@ if (dryRun) {
 } else {
   const res = await fetch(webhook, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
   console.log(`slack: HTTP ${res.status}`)
+  console.log(text) // aggregate numbers only — safe in a public Actions log, handy for debugging
   if (!res.ok) {
     console.log(await res.text())
     process.exitCode = 1
