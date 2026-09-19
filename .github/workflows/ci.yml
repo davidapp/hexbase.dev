@@ -1,8 +1,12 @@
 name: CI
 
-# Pull-request checks. Needs no secrets, so it runs for forks too.
-# Deployment is a separate workflow (deploy.yml) that only runs on main.
+# Checks for pull requests and for every push to main. Needs no secrets,
+# so it runs for forks too. Deployment is a separate workflow (deploy.yml)
+# that only runs on main; running the checks here as well keeps the README
+# badge tied to main rather than to whichever PR ran last.
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

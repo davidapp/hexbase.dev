@@ -1,7 +1,7 @@
 # hexbase.dev
 
 [![Deploy](https://github.com/davidapp/hexbase.dev/actions/workflows/deploy.yml/badge.svg)](https://github.com/davidapp/hexbase.dev/actions/workflows/deploy.yml)
-[![CI](https://github.com/davidapp/hexbase.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/davidapp/hexbase.dev/actions/workflows/ci.yml)
+[![CI](https://github.com/davidapp/hexbase.dev/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/davidapp/hexbase.dev/actions/workflows/ci.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
 [![Live](https://img.shields.io/badge/live-hexbase.dev-53d4ff.svg)](https://hexbase.dev)
 
