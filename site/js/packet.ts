@@ -92,8 +92,44 @@ const pcapSection = $('#pcap-section')
 const pcapSummary = $('#pcap-summary')
 const pcapCount = $('#pcap-count')
 const framelist = $('#framelist')
+const frameFilter = $<HTMLInputElement>('#frame-filter')
 let capture: PcapFile | null = null
 let selectedRow: HTMLElement | null = null
+
+// The frame list is a single-select listbox: ↑ ↓ move (and decode), Home/End jump.
+framelist.setAttribute('role', 'listbox')
+framelist.setAttribute('aria-label', 'frames')
+framelist.addEventListener('keydown', (e) => {
+  const row = (e.target as HTMLElement).closest<HTMLElement>('.frow')
+  if (!row) return
+  const rows = [...framelist.querySelectorAll<HTMLElement>('.frow:not(.hidden)')]
+  const i = rows.indexOf(row)
+  const target =
+    e.key === 'ArrowDown' ? rows[i + 1] : e.key === 'ArrowUp' ? rows[i - 1] : e.key === 'Home' ? rows[0] : e.key === 'End' ? rows[rows.length - 1] : undefined
+  if (!target) return
+  e.preventDefault()
+  target.focus()
+  target.click()
+})
+
+function applyFrameFilter(): void {
+  if (!capture) return
+  const q = frameFilter.value.trim().toLowerCase()
+  const rows = [...framelist.querySelectorAll<HTMLElement>('.frow')]
+  let shown = 0
+  for (const row of rows) {
+    const hit = !q || row.textContent!.toLowerCase().includes(q)
+    row.classList.toggle('hidden', !hit)
+    if (hit) shown++
+  }
+  const total = capture.frames.length
+  pcapCount.textContent = q
+    ? `${shown} of ${total} frame${total === 1 ? '' : 's'} match`
+    : rows.length < total
+      ? `showing ${rows.length} of ${total} frames`
+      : `${total} frame${total === 1 ? '' : 's'}`
+}
+frameFilter.addEventListener('input', applyFrameFilter)
 
 function frameBrief(i: number): string {
   const f = capture!.frames[i]
@@ -109,7 +145,11 @@ function frameBrief(i: number): string {
 function selectFrame(i: number, row: HTMLElement): void {
   const f = capture!.frames[i]
   selectedRow?.classList.remove('sel')
+  selectedRow?.setAttribute('aria-selected', 'false')
+  if (selectedRow) selectedRow.tabIndex = -1
   row.classList.add('sel')
+  row.setAttribute('aria-selected', 'true')
+  row.tabIndex = 0
   selectedRow = row
   input.value = toDump(f.bytes)
   // reflect the frame's first layer in the selector when it's an offered choice
@@ -128,14 +168,16 @@ function renderCapture(name: string, cap: PcapFile): void {
     warnings: cap.warnings,
   })
   framelist.textContent = ''
+  frameFilter.value = ''
   const shown = Math.min(cap.frames.length, ROW_LIMIT)
-  pcapCount.textContent =
-    shown < cap.frames.length ? `showing ${shown} of ${cap.frames.length} frames` : `${cap.frames.length} frame${cap.frames.length === 1 ? '' : 's'}`
   const firstTs = cap.frames.find((f) => f.tsSec > 0)?.tsSec ?? 0
   const frag = document.createDocumentFragment()
   for (let i = 0; i < shown; i++) {
     const f = cap.frames[i]
     const row = el('div', 'frow')
+    row.setAttribute('role', 'option')
+    row.setAttribute('aria-selected', 'false')
+    row.tabIndex = -1
     row.append(
       el('span', 'fnum', String(f.index)),
       el('span', 'ftime', frameTime(f, firstTs)),
@@ -146,6 +188,7 @@ function renderCapture(name: string, cap: PcapFile): void {
     frag.append(row)
   }
   framelist.append(frag)
+  applyFrameFilter()
   pcapSection.classList.remove('hidden')
   if (cap.frames.length > 0) selectFrame(0, framelist.firstElementChild as HTMLElement)
   else showMsg(msg, 'warn', 'capture file parsed, but it contains no frames')

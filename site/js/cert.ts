@@ -1,6 +1,7 @@
 import { bytesToHex, formatSize } from '@core/bytes'
-import { parseAnyDer, parseCertificate, toDer } from '@core/x509'
+import { describeChain, parseAnyDer, parseCertificate, splitPem, type CertParse } from '@core/x509'
 import { $, bindShare, el, HexView, hideMsg, initChrome, loadShare, RegionTree, renderResultHead, shareParam, showMsg, toast } from './ui'
+import { SAMPLE_CHAIN_PEM } from './certSample'
 
 initChrome()
 
@@ -10,12 +11,16 @@ const result = $('#result')
 const summary = $('#summary')
 const certinfo = $('#certinfo')
 const fingerprints = $('#fingerprints')
+const chainSection = $('#chain-section')
+const chainList = $('#chain')
+const chainCount = $('#chain-count')
 
 const hexview = new HexView($('#hexview'))
 const tree = new RegionTree($('#tree'), $('#note'))
 tree.onSelect = (region) => hexview.highlight(region.offset, region.length)
 
-let currentDer: Uint8Array | null = null
+/** What Share uploads: the pasted text (so a whole chain round-trips) or the dropped DER. */
+let currentInput: Uint8Array | null = null
 
 async function renderFingerprints(der: Uint8Array): Promise<void> {
   fingerprints.textContent = ''
@@ -33,27 +38,13 @@ async function renderFingerprints(der: Uint8Array): Promise<void> {
   }
 }
 
-function decode(): void {
-  hideMsg(msg)
-  let der: Uint8Array
-  try {
-    der = toDer(input.value)
-  } catch (e) {
-    showMsg(msg, 'err', e instanceof Error ? e.message : String(e))
-    result.classList.add('hidden')
-    return
-  }
-  decodeDer(der)
-}
-
-function decodeDer(der: Uint8Array): void {
-  currentDer = der
+/** Render one certificate (or, failing that, its generic ASN.1 tree). */
+function showDer(der: Uint8Array): void {
   try {
     const parsed = parseCertificate(der)
     renderResultHead(summary, parsed.result)
     tree.set(parsed.result.regions)
   } catch (e) {
-    // Not a certificate — fall back to the generic ASN.1 tree when it's valid DER.
     try {
       const generic = parseAnyDer(der)
       renderResultHead(summary, generic)
@@ -70,6 +61,98 @@ function decodeDer(der: Uint8Array): void {
   void renderFingerprints(der)
 }
 
+const cnOf = (rdn: string): string => rdn.match(/CN=([^,]+)/)?.[1] ?? rdn
+
+/** The chain panel: one row per certificate, ↑ ↓ to move, click/Enter to inspect. */
+function renderChain(certs: CertParse[]): void {
+  const links = describeChain(certs)
+  chainList.textContent = ''
+  chainList.setAttribute('role', 'listbox')
+  chainList.setAttribute('aria-label', 'certificate chain')
+  chainCount.textContent = `${certs.length} certificates`
+  let selected: HTMLElement | null = null
+  const select = (row: HTMLElement, c: CertParse) => {
+    selected?.classList.remove('sel')
+    selected?.setAttribute('aria-selected', 'false')
+    if (selected) selected.tabIndex = -1
+    row.classList.add('sel')
+    row.setAttribute('aria-selected', 'true')
+    row.tabIndex = 0
+    selected = row
+    showDer(c.der)
+  }
+  certs.forEach((c, i) => {
+    const link = links[i]
+    const row = el('div', 'chainrow')
+    row.setAttribute('role', 'option')
+    row.setAttribute('aria-selected', 'false')
+    row.tabIndex = -1
+    const until = c.facts.notAfter ? c.facts.notAfter.toISOString().slice(0, 10) : '?'
+    row.append(el('span', 'cnum', `#${i + 1}`), el('span', 'crole', link.role), el('span', 'cname', `${cnOf(c.facts.subject)} · until ${until}`))
+    const linkSpan = el('span', 'clink')
+    linkSpan.append(document.createTextNode(link.notes.join(' · ') + (link.keyIdMatch === null ? '' : ' ')))
+    if (link.keyIdMatch !== null) linkSpan.append(el('span', link.keyIdMatch ? 'ok' : 'bad', link.keyIdMatch ? '✓ key id' : '✗ key id'))
+    row.append(linkSpan)
+    row.addEventListener('click', () => select(row, c))
+    chainList.append(row)
+  })
+  chainList.onkeydown = (e) => {
+    const row = (e.target as HTMLElement).closest<HTMLElement>('.chainrow')
+    if (!row) return
+    const rows = [...chainList.querySelectorAll<HTMLElement>('.chainrow')]
+    const i = rows.indexOf(row)
+    const target = e.key === 'ArrowDown' ? rows[i + 1] : e.key === 'ArrowUp' ? rows[i - 1] : e.key === 'Home' ? rows[0] : e.key === 'End' ? rows[rows.length - 1] : undefined
+    if (!target) return
+    e.preventDefault()
+    target.focus()
+    target.click()
+  }
+  chainSection.classList.remove('hidden')
+  const first = chainList.firstElementChild as HTMLElement | null
+  if (first) select(first, certs[0])
+}
+
+/** Entry point for pasted text, dropped files and shared payloads. */
+function decodeInput(raw: Uint8Array | string): void {
+  hideMsg(msg)
+  let ders: Uint8Array[]
+  try {
+    ders = splitPem(raw)
+  } catch (e) {
+    showMsg(msg, 'err', e instanceof Error ? e.message : String(e))
+    result.classList.add('hidden')
+    chainSection.classList.add('hidden')
+    return
+  }
+  currentInput = typeof raw === 'string' ? new TextEncoder().encode(raw) : raw
+  if (ders.length <= 1) {
+    chainSection.classList.add('hidden')
+    showDer(ders[0])
+    return
+  }
+  const parsed = ders.map((d) => {
+    try {
+      return parseCertificate(d)
+    } catch {
+      return null
+    }
+  })
+  const certs = parsed.filter((p): p is CertParse => p !== null)
+  if (certs.length < parsed.length) {
+    showMsg(msg, 'warn', `${parsed.length - certs.length} of ${parsed.length} blocks are not certificates and were skipped`)
+  }
+  if (certs.length === 0) {
+    chainSection.classList.add('hidden')
+    showDer(ders[0])
+    return
+  }
+  renderChain(certs)
+}
+
+function decode(): void {
+  decodeInput(input.value)
+}
+
 $('#decode').addEventListener('click', decode)
 input.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') decode()
@@ -79,42 +162,17 @@ $('#clear').addEventListener('click', () => {
   input.value = ''
   hideMsg(msg)
   result.classList.add('hidden')
+  chainSection.classList.add('hidden')
   fingerprints.textContent = ''
-  currentDer = null
+  currentInput = null
 })
 
-// Real leaf certificate for example.com (fetched 2026-07; expires 2026-08 — the
-// expiry countdown demonstrating itself is part of the lesson).
-const SAMPLE_PEM = `-----BEGIN CERTIFICATE-----
-MIID5zCCA42gAwIBAgIQGqc/6iV74zNLmilVLm+HjjAKBggqhkjOPQQDAjBRMQsw
-CQYDVQQGEwJVUzEYMBYGA1UECgwPU1NMIENvcnBvcmF0aW9uMSgwJgYDVQQDDB9D
-bG91ZGZsYXJlIFRMUyBJc3N1aW5nIEVDQyBDQSAzMB4XDTI2MDUzMTIxMzkxMloX
-DTI2MDgyOTIxNDEyNlowFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wWTATBgcqhkjO
-PQIBBggqhkjOPQMBBwNCAAR3K9vg9mgByiZluphXApVAUpQtIO9MPLbbdVxu2SDI
-KEYKZhTqszaA9lNa6oAGtsi++/m+uwI35sAG+zkIpAeOo4ICgDCCAnwwDAYDVR0T
-AQH/BAIwADAfBgNVHSMEGDAWgBSDA/3n9vVKTRVB9O0iFtMyCj7KZjBsBggrBgEF
-BQcBAQRgMF4wOQYIKwYBBQUHMAKGLWh0dHA6Ly9pLmNmLWkuc3NsLmNvbS9DbG91
-ZGZsYXJlLVRMUy1JLUUzLmNlcjAhBggrBgEFBQcwAYYVaHR0cDovL28uY2YtaS5z
-c2wuY29tMCUGA1UdEQQeMByCC2V4YW1wbGUuY29tgg0qLmV4YW1wbGUuY29tMCMG
-A1UdIAQcMBowCAYGZ4EMAQIBMA4GDCsGAQQBgqkwAQMBATATBgNVHSUEDDAKBggr
-BgEFBQcDATBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vYy5jZi1pLnNzbC5jb20v
-YWU4MDFlZDFjNTViYjU3OWQ3OTIwOGIwZDc3MmFjZmI4Y2MzYTIwOC5jcmwwDgYD
-VR0PAQH/BAQDAgeAMA8GCSsGAQQBgtpLLAQCBQAwggEEBgorBgEEAdZ5AgQCBIH1
-BIHyAPAAdgCUTkOH+uzB74HzGSQmqBhlAcfTXzgCAT9yZ31VNy4Z2AAAAZ6AAzGJ
-AAAEAwBHMEUCIQCBv0JM0mXaiiQ9efuArkk3O2t/RQ39q7O3oKtYCvOUhQIgdn2u
-t5rn+AWzBqZ9m1VOlMLpT/jy2M92Is6itMy9rR8AdgDIo8R/x7OtuTVrAT9qehJt
-4zpOQ6XGRvmXrTl1mR3PmgAAAZ6AAzGgAAAEAwBHMEUCIQCoc8r0LVigaz6pvG8s
-v0+uBqzf+LPNPxwYxtgkuVdNMwIgAbK/qRNJIWljIVp30PFWjmM+SnoT80ShaPJM
-GdbtNLMwCgYIKoZIzj0EAwIDSAAwRQIhALDciGbviRHUIMPez2CVH+Vc0NiaT8Br
-FrUGD7dej3D4AiAfs90UtVHGYKTXYYPIJlVqUK1amlBBby7M2KI7pSMjxA==
------END CERTIFICATE-----`
-
 $('#sample').addEventListener('click', () => {
-  input.value = SAMPLE_PEM
+  input.value = SAMPLE_CHAIN_PEM
   decode()
 })
 
-// drop a .crt/.cer/.der/.pem file anywhere
+// drop a .crt/.cer/.der/.pem (or fullchain.pem) file anywhere
 document.addEventListener('dragover', (e) => e.preventDefault())
 document.addEventListener('drop', (e) => {
   e.preventDefault()
@@ -126,27 +184,29 @@ document.addEventListener('drop', (e) => {
   }
   void file.arrayBuffer().then((buf) => {
     const bytes = new Uint8Array(buf)
-    try {
-      const der = toDer(bytes)
-      if (der === bytes) input.value = `(binary DER from ${file.name} — ${formatSize(der.length)})`
-      else input.value = new TextDecoder().decode(bytes)
-      decodeDer(der)
-    } catch (err) {
-      showMsg(msg, 'err', err instanceof Error ? err.message : String(err))
+    if (bytes[0] === 0x30) {
+      input.value = `(binary DER from ${file.name} — ${formatSize(bytes.length)})`
+      decodeInput(bytes)
+    } else {
+      input.value = new TextDecoder().decode(bytes)
+      decode()
     }
   })
 })
 
-bindShare($('#share'), 'cert', () => (currentDer ? { bytes: currentDer } : null))
+bindShare($('#share'), 'cert', () => (currentInput ? { bytes: currentInput } : null))
 
 const code = shareParam()
 if (code) {
   loadShare(code)
     .then(({ bytes }) => {
-      const der = toDer(bytes)
-      if (der !== bytes) input.value = new TextDecoder().decode(bytes)
-      else input.value = `(shared binary DER — ${formatSize(der.length)})`
-      decodeDer(der)
+      if (bytes[0] === 0x30) {
+        input.value = `(shared binary DER — ${formatSize(bytes.length)})`
+        decodeInput(bytes)
+      } else {
+        input.value = new TextDecoder().decode(bytes)
+        decode()
+      }
       toast('Loaded shared certificate')
     })
     .catch((e) => showMsg(msg, 'err', e instanceof Error ? e.message : 'failed to load share'))

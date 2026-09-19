@@ -34,18 +34,51 @@ function keySegment(key: string): string {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? `.${key}` : `[${JSON.stringify(key)}]`
 }
 
-/**
- * Structural diff of two parsed JSON values.
- * Objects diff by key; arrays diff by index (an insertion therefore shifts
- * everything after it — that trade-off is documented on the tool page).
- */
-export function diffJson(a: unknown, b: unknown, maxEntries = 5000): DiffEntry[] {
-  const out: DiffEntry[] = []
-  walk(a, b, '$', out, maxEntries)
-  return out
+export interface DiffOptions {
+  maxEntries?: number
+  /**
+   * When set, arrays whose elements are all objects carrying this key (with
+   * unique values) are aligned by that key instead of by index, so an insertion
+   * reports one added item rather than shifting everything after it.
+   */
+  arrayKey?: string
 }
 
-function walk(a: unknown, b: unknown, path: string, out: DiffEntry[], max: number): void {
+interface Ctx {
+  out: DiffEntry[]
+  max: number
+  arrayKey: string | undefined
+}
+
+/**
+ * Structural diff of two parsed JSON values.
+ * Objects diff by key; arrays diff by index unless `arrayKey` lets them be
+ * matched by an identifying field (see DiffOptions).
+ */
+export function diffJson(a: unknown, b: unknown, options: number | DiffOptions = {}): DiffEntry[] {
+  const opts = typeof options === 'number' ? { maxEntries: options } : options
+  const ctx: Ctx = { out: [], max: opts.maxEntries ?? 5000, arrayKey: opts.arrayKey || undefined }
+  walk(a, b, '$', ctx)
+  return ctx.out
+}
+
+/** Map of key value → element, or null when the array can't be keyed unambiguously. */
+function keyIndex(arr: unknown[], key: string): Map<string, unknown> | null {
+  if (arr.length === 0) return new Map()
+  const map = new Map<string, unknown>()
+  for (const item of arr) {
+    if (typeOf(item) !== 'object') return null
+    const v = (item as Record<string, unknown>)[key]
+    if (v === undefined || (typeof v !== 'string' && typeof v !== 'number' && typeof v !== 'boolean')) return null
+    const k = JSON.stringify(v)
+    if (map.has(k)) return null // duplicate keys: index alignment is the only honest option
+    map.set(k, item)
+  }
+  return map
+}
+
+function walk(a: unknown, b: unknown, path: string, ctx: Ctx): void {
+  const { out, max } = ctx
   if (out.length >= max) return
   const ta = typeOf(a)
   const tb = typeOf(b)
@@ -58,7 +91,7 @@ function walk(a: unknown, b: unknown, path: string, out: DiffEntry[], max: numbe
     const bo = b as Record<string, unknown>
     for (const key of Object.keys(ao)) {
       if (out.length >= max) return
-      if (key in bo) walk(ao[key], bo[key], path + keySegment(key), out, max)
+      if (key in bo) walk(ao[key], bo[key], path + keySegment(key), ctx)
       else out.push({ path: path + keySegment(key), kind: 'removed', left: renderValue(ao[key]) })
     }
     for (const key of Object.keys(bo)) {
@@ -70,10 +103,27 @@ function walk(a: unknown, b: unknown, path: string, out: DiffEntry[], max: numbe
   if (ta === 'array') {
     const aa = a as unknown[]
     const ba = b as unknown[]
+    if (ctx.arrayKey) {
+      const ka = keyIndex(aa, ctx.arrayKey)
+      const kb = keyIndex(ba, ctx.arrayKey)
+      if (ka && kb && (ka.size > 0 || kb.size > 0)) {
+        for (const [k, item] of ka) {
+          if (out.length >= max) return
+          const seg = `${path}[${ctx.arrayKey}=${k}]`
+          if (kb.has(k)) walk(item, kb.get(k), seg, ctx)
+          else out.push({ path: seg, kind: 'removed', left: renderValue(item) })
+        }
+        for (const [k, item] of kb) {
+          if (out.length >= max) return
+          if (!ka.has(k)) out.push({ path: `${path}[${ctx.arrayKey}=${k}]`, kind: 'added', right: renderValue(item) })
+        }
+        return
+      }
+    }
     const shared = Math.min(aa.length, ba.length)
     for (let i = 0; i < shared; i++) {
       if (out.length >= max) return
-      walk(aa[i], ba[i], `${path}[${i}]`, out, max)
+      walk(aa[i], ba[i], `${path}[${i}]`, ctx)
     }
     for (let i = shared; i < aa.length; i++) {
       if (out.length >= max) return

@@ -123,7 +123,13 @@
 
       <section id="pcap-section" class="hidden" style="margin-top: 18px">
         <div class="card" id="pcap-summary" style="margin-bottom: 12px"></div>
-        <div class="pane-title"><span>frames</span><span id="pcap-count"></span></div>
+        <div class="pane-title">
+          <span>frames</span>
+          <span class="btn-row" style="text-transform: none">
+            <input type="search" id="frame-filter" placeholder="filter: dns, tcp, 10.0.0.5, [SYN] …" aria-label="Filter frames" spellcheck="false" style="width: 240px" />
+            <span id="pcap-count"></span>
+          </span>
+        </div>
         <div class="framelist" id="framelist"></div>
       </section>
 

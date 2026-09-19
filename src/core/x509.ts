@@ -115,6 +115,9 @@ export interface CertFacts {
   extKeyUsage: string[]
   selfSigned: boolean
   version: number
+  /** subjectKeyIdentifier / authorityKeyIdentifier key ids (colon hex), for chain linking. */
+  ski: string | null
+  aki: string | null
 }
 
 export interface CertParse {
@@ -123,19 +126,7 @@ export interface CertParse {
   der: Uint8Array
 }
 
-/** Accepts PEM armor, bare base64, or raw DER bytes; returns DER. */
-export function toDer(input: Uint8Array | string): Uint8Array {
-  if (typeof input !== 'string') {
-    // Raw DER starts with SEQUENCE (0x30); otherwise try to read it as text.
-    if (input.length > 0 && input[0] === 0x30) return input
-    input = new TextDecoder().decode(input)
-  }
-  const text = input.trim()
-  const pem = text.match(/-----BEGIN ([A-Z0-9 ]+)-----([\s\S]*?)-----END \1-----/)
-  const base64 = pem ? pem[2] : text
-  if (pem && !/CERTIFICATE/.test(pem[1])) {
-    throw new Error(`this is a "${pem[1]}" PEM block — paste a CERTIFICATE block (private keys don't belong in browser tools)`)
-  }
+function base64ToDer(base64: string): Uint8Array {
   const cleaned = base64.replace(/[\s\r\n]/g, '')
   if (!/^[A-Za-z0-9+/=_-]+$/.test(cleaned) || cleaned.length < 16) {
     throw new Error('not a certificate: expected PEM armor (-----BEGIN CERTIFICATE-----), base64, or DER bytes')
@@ -150,6 +141,36 @@ export function toDer(input: Uint8Array | string): Uint8Array {
   const out = new Uint8Array(bin.length)
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
   return out
+}
+
+const PEM_BLOCK = /-----BEGIN ([A-Z0-9 ]+)-----([\s\S]*?)-----END \1-----/g
+
+function rejectPrivateKey(label: string): void {
+  if (!/CERTIFICATE/.test(label)) {
+    throw new Error(`this is a "${label}" PEM block — paste a CERTIFICATE block (private keys don't belong in browser tools)`)
+  }
+}
+
+/**
+ * Every certificate in the input, in order: all CERTIFICATE PEM blocks of a
+ * text (a fullchain.pem yields several), or a single DER / bare-base64 blob.
+ * Throws on private-key blocks so nobody learns that habit here.
+ */
+export function splitPem(input: Uint8Array | string): Uint8Array[] {
+  if (typeof input !== 'string') {
+    if (input.length > 0 && input[0] === 0x30) return [input] // raw DER: SEQUENCE
+    input = new TextDecoder().decode(input)
+  }
+  const text = input.trim()
+  const blocks = [...text.matchAll(PEM_BLOCK)]
+  if (blocks.length === 0) return [base64ToDer(text)]
+  for (const b of blocks) rejectPrivateKey(b[1])
+  return blocks.map((b) => base64ToDer(b[2]))
+}
+
+/** Accepts PEM armor, bare base64, or raw DER bytes; returns the (first) certificate's DER. */
+export function toDer(input: Uint8Array | string): Uint8Array {
+  return splitPem(input)[0]
 }
 
 function rdnToString(bytes: Uint8Array, name: Asn1Node): string {
@@ -214,6 +235,8 @@ export function parseCertificate(der: Uint8Array): CertParse {
     extKeyUsage: [],
     selfSigned: false,
     version: 1,
+    ski: null,
+    aki: null,
   }
 
   // tbsCertificate fields in order, version tag optional
@@ -378,7 +401,17 @@ export function parseCertificate(der: Uint8Array): CertParse {
           } else if (oid === '2.5.29.14' && valueNode) {
             const inner2 = parseDer(content(der, valueNode))[0]
             value = bytesToHex(content(content(der, valueNode), inner2), ':')
+            facts.ski = value
             note = 'Hash of this certificate’s own key; children reference it via authorityKeyIdentifier to link the chain.'
+          } else if (oid === '2.5.29.35' && inner && valueNode) {
+            // AuthorityKeyIdentifier ::= SEQUENCE { [0] keyIdentifier, [1] issuer, [2] serial }
+            const src = content(der, valueNode)
+            const kid = inner.children?.find((c) => c.tagClass === 2 && c.tag === 0)
+            if (kid) {
+              facts.aki = bytesToHex(content(src, kid), ':')
+              value = `keyid:${facts.aki}`
+            }
+            note = 'Which key signed this certificate — it should equal the issuer’s subjectKeyIdentifier; that equality is how chains are linked.'
           } else if (oid === '1.3.6.1.4.1.11129.2.4.2') {
             value = `${valueNode?.length ?? 0} bytes of signed certificate timestamps`
             note = 'Proof the cert was logged in public Certificate Transparency logs — required by Chrome and Safari.'
@@ -459,6 +492,47 @@ export function describeValidity(facts: CertFacts, now = new Date()): string {
   }
   const days = Math.floor((facts.notAfter.getTime() - now.getTime()) / 86400000)
   return `validity: ${from} → ${to} — valid, ${days} day${days === 1 ? '' : 's'} remaining`
+}
+
+export interface ChainLink {
+  index: number
+  role: 'leaf' | 'intermediate' | 'root'
+  /** Index of the certificate in this list whose subject matches this one's issuer, if present. */
+  issuedBy: number | null
+  /** Whether AKI/SKI key identifiers confirm the link (null when either side lacks the extension). */
+  keyIdMatch: boolean | null
+  notes: string[]
+}
+
+/**
+ * How the certificates of a pasted chain relate: who issued whom, by name
+ * (issuer = subject) and by key identifier (AKI = SKI). This is linkage, not
+ * signature verification — it tells you the chain is assembled correctly.
+ */
+export function describeChain(certs: CertParse[]): ChainLink[] {
+  return certs.map((c, i) => {
+    const f = c.facts
+    const notes: string[] = []
+    const issuerIdx = certs.findIndex((o, j) => j !== i && o.facts.subject === f.issuer)
+    const issuedBy = f.selfSigned ? i : issuerIdx >= 0 ? issuerIdx : null
+    const isIssuerOfSomeone = certs.some((o, j) => j !== i && o.facts.issuer === f.subject && !o.facts.selfSigned)
+    const role: ChainLink['role'] = f.selfSigned ? 'root' : isIssuerOfSomeone ? 'intermediate' : 'leaf'
+    let keyIdMatch: boolean | null = null
+    if (f.selfSigned) {
+      notes.push('self-signed: issuer and subject are the same name')
+      if (f.aki && f.ski) keyIdMatch = f.aki === f.ski
+    } else if (issuedBy !== null) {
+      const issuer = certs[issuedBy].facts
+      notes.push(`issuer matches subject of #${issuedBy + 1}`)
+      if (f.aki && issuer.ski) {
+        keyIdMatch = f.aki === issuer.ski
+        notes.push(keyIdMatch ? `authorityKeyIdentifier matches #${issuedBy + 1}’s subjectKeyIdentifier` : `authorityKeyIdentifier does NOT match #${issuedBy + 1}’s subjectKeyIdentifier — wrong intermediate?`)
+      }
+    } else {
+      notes.push(role === 'leaf' && certs.length > 1 ? 'issuer not found in this chain' : 'issuer not in this chain — the root usually lives in the client’s trust store, not in the served chain')
+    }
+    return { index: i, role, issuedBy, keyIdMatch, notes }
+  })
 }
 
 /** Generic view for non-certificate DER: still show the full ASN.1 tree. */

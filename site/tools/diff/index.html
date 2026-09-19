@@ -31,6 +31,7 @@
               "Structural JSON comparison — key order and formatting don't matter",
               "Every difference reported with its exact JSONPath",
               "Added / removed / changed / type-changed classification",
+              "Optional key-based array matching (e.g. by id) so insertions don't shift every index",
               "Plain-text mode with a minimal (Myers) line diff",
               "Swap sides, load a sample, share a comparison",
               "Local-first: documents are compared in the browser and never uploaded"
@@ -55,7 +56,7 @@
               {
                 "@type": "Question",
                 "name": "How are arrays compared?",
-                "acceptedAnswer": { "@type": "Answer", "text": "By index: element 3 on the left is compared with element 3 on the right. That means inserting one element near the front reports every later index as changed — the honest trade-off of index alignment. When element order doesn't matter in your data, sort both arrays first." }
+                "acceptedAnswer": { "@type": "Answer", "text": "By index by default: element 3 on the left is compared with element 3 on the right, so inserting one element near the front reports every later index as changed. When the elements are objects with an identifying field, enter it in 'match array items by key' (e.g. id): elements are then paired by that value, an insertion reports one added item, and paths read $.users[id=42].name. Arrays with missing or duplicate keys fall back to index alignment." }
               },
               {
                 "@type": "Question",
@@ -110,6 +111,8 @@
 
       <div class="btn-row" style="margin-top: 10px">
         <button class="btn primary" id="compare">compare</button>
+        <label class="checks" for="array-key" title="Match array elements by this field instead of by position (objects only; falls back to index when a key is missing or duplicated)">match array items by key:</label>
+        <input type="text" id="array-key" placeholder="e.g. id" spellcheck="false" style="width: 110px" />
         <span id="diff-stats" style="font: 0.78rem var(--font-mono); color: var(--muted)"></span>
       </div>
       <div class="msg hidden" id="diff-msg"></div>
@@ -159,9 +162,11 @@
         </p>
         <h3>How are arrays compared?</h3>
         <p>
-          By index: element 3 on the left is compared with element 3 on the right. That means inserting one element
-          near the front reports every later index as changed — the honest trade-off of index alignment. When element
-          order doesn't matter in your data, sort both arrays first.
+          By index by default: element 3 on the left is compared with element 3 on the right, so inserting one element
+          near the front reports every later index as changed. When the elements are objects with an identifying
+          field, enter it in <em>match array items by key</em> (e.g. <code>id</code>): elements are then paired by
+          that value, an insertion reports one added item, and paths read <code>$.users[id=42].name</code>. Arrays
+          with missing or duplicate keys fall back to index alignment.
         </p>
         <h3>Does key order matter in JSON?</h3>
         <p>

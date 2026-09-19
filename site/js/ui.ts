@@ -48,11 +48,29 @@ export function initChrome(): void {
       /* private mode */
     }
   })
-  // click-to-copy for anything marked .copyable
+  // click-to-copy for anything marked .copyable — also focusable and Enter/Space-able
   document.addEventListener('click', (e) => {
     const target = (e.target as HTMLElement).closest<HTMLElement>('.copyable')
     if (target) void copyText(target.dataset.copy ?? target.textContent ?? '')
   })
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return
+    const target = (e.target as HTMLElement).closest<HTMLElement>('.copyable')
+    if (!target) return
+    e.preventDefault()
+    void copyText(target.dataset.copy ?? target.textContent ?? '')
+  })
+  const makeFocusable = (root: ParentNode) => {
+    root.querySelectorAll<HTMLElement>('.copyable:not([tabindex])').forEach((n) => {
+      n.tabIndex = 0
+      n.setAttribute('role', 'button')
+      if (!n.title) n.title = 'Click or press Enter to copy'
+    })
+  }
+  makeFocusable(document)
+  new MutationObserver((records) => {
+    for (const r of records) r.addedNodes.forEach((n) => n instanceof Element && makeFocusable(n))
+  }).observe(document.body, { childList: true, subtree: true })
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined
@@ -78,6 +96,7 @@ export async function copyText(text: string): Promise<void> {
 /** Wire up a .tabs strip: buttons carry data-tab, panels carry data-panel. */
 export function initTabs(scope: HTMLElement, onChange?: (id: string) => void): void {
   const buttons = [...scope.querySelectorAll<HTMLButtonElement>('.tabs button[data-tab]')]
+  scope.querySelectorAll<HTMLElement>('.tabs').forEach((strip) => strip.setAttribute('role', 'tablist'))
   const activate = (id: string) => {
     buttons.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === id)))
     scope.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => {
@@ -85,7 +104,18 @@ export function initTabs(scope: HTMLElement, onChange?: (id: string) => void): v
     })
     onChange?.(id)
   }
-  buttons.forEach((b) => b.addEventListener('click', () => activate(b.dataset.tab!)))
+  buttons.forEach((b, i) => {
+    b.setAttribute('role', 'tab')
+    b.addEventListener('click', () => activate(b.dataset.tab!))
+    // ← → move between tabs and activate (the usual tablist keyboard model)
+    b.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
+      e.preventDefault()
+      const next = buttons[(i + (e.key === 'ArrowRight' ? 1 : buttons.length - 1)) % buttons.length]
+      next.focus()
+      activate(next.dataset.tab!)
+    })
+  })
   if (buttons[0]) activate(buttons[0].dataset.tab!)
 }
 
@@ -242,6 +272,12 @@ export class HexView {
 
 // ---------------------------------------------------------------- region tree
 
+/**
+ * Collapsible tree of parsed regions. Keyboard: ↑ ↓ move between visible rows,
+ * → expands (or steps into a child), ← collapses (or steps to the parent),
+ * Home/End jump, Enter/Space selects — the WAI-ARIA tree pattern, with a
+ * roving tabindex so the tree is a single Tab stop.
+ */
 export class RegionTree {
   private container: HTMLElement
   private note: HTMLElement
@@ -251,6 +287,13 @@ export class RegionTree {
   constructor(container: HTMLElement, note: HTMLElement) {
     this.container = container
     this.note = note
+    container.setAttribute('role', 'tree')
+    if (!container.getAttribute('aria-label')) container.setAttribute('aria-label', 'structure')
+    container.addEventListener('keydown', (e) => this.onKey(e))
+    container.addEventListener('focusin', (e) => {
+      const row = (e.target as HTMLElement).closest<HTMLElement>('.trow')
+      if (row) this.setCurrent(row)
+    })
   }
 
   set(regions: Region[]): void {
@@ -260,11 +303,83 @@ export class RegionTree {
     const frag = document.createDocumentFragment()
     for (const r of regions) frag.append(this.renderNode(r, 0))
     this.container.append(frag)
+    const first = this.container.querySelector<HTMLElement>('.trow')
+    if (first) first.tabIndex = 0
+  }
+
+  /** Rows not hidden inside a collapsed ancestor, in document order. */
+  private visibleRows(): HTMLElement[] {
+    return [...this.container.querySelectorAll<HTMLElement>('.trow')].filter((row) => {
+      let ancestor = row.parentElement?.parentElement?.closest<HTMLElement>('.tnode') ?? null
+      while (ancestor) {
+        if (ancestor.classList.contains('collapsed')) return false
+        ancestor = ancestor.parentElement?.closest<HTMLElement>('.tnode') ?? null
+      }
+      return true
+    })
+  }
+
+  private setCurrent(row: HTMLElement): void {
+    this.container.querySelectorAll<HTMLElement>('.trow[tabindex="0"]').forEach((r) => (r.tabIndex = -1))
+    row.tabIndex = 0
+  }
+
+  private focusRow(row: HTMLElement | undefined): void {
+    if (!row) return
+    this.setCurrent(row)
+    row.focus()
+  }
+
+  private toggle(node: HTMLElement, tw: HTMLElement, collapsed?: boolean): void {
+    const now = node.classList.toggle('collapsed', collapsed)
+    tw.textContent = now ? '▸' : '▾'
+    node.firstElementChild?.setAttribute('aria-expanded', String(!now))
+  }
+
+  private onKey(e: KeyboardEvent): void {
+    const row = (e.target as HTMLElement).closest<HTMLElement>('.trow')
+    if (!row) return
+    const node = row.parentElement as HTMLElement
+    const tw = row.querySelector<HTMLElement>('.tw')!
+    const rows = this.visibleRows()
+    const i = rows.indexOf(row)
+    const expandable = node.querySelector(':scope > .tkids') !== null
+    switch (e.key) {
+      case 'ArrowDown':
+        this.focusRow(rows[i + 1])
+        break
+      case 'ArrowUp':
+        this.focusRow(rows[i - 1])
+        break
+      case 'ArrowRight':
+        if (expandable && node.classList.contains('collapsed')) this.toggle(node, tw, false)
+        else if (expandable) this.focusRow(node.querySelector<HTMLElement>(':scope > .tkids .trow') ?? undefined)
+        break
+      case 'ArrowLeft':
+        if (expandable && !node.classList.contains('collapsed')) this.toggle(node, tw, true)
+        else this.focusRow(node.parentElement?.closest<HTMLElement>('.tnode')?.querySelector<HTMLElement>(':scope > .trow') ?? undefined)
+        break
+      case 'Home':
+        this.focusRow(rows[0])
+        break
+      case 'End':
+        this.focusRow(rows[rows.length - 1])
+        break
+      case 'Enter':
+      case ' ':
+        row.click()
+        break
+      default:
+        return
+    }
+    e.preventDefault()
   }
 
   private renderNode(region: Region, depth: number): HTMLElement {
     const node = el('div', 'tnode')
     const row = el('div', 'trow')
+    row.setAttribute('role', 'treeitem')
+    row.tabIndex = -1
     const tw = el('span', 'tw')
     const hasKids = !!region.children?.length
     tw.textContent = hasKids ? '▾' : '·'
@@ -273,6 +388,7 @@ export class RegionTree {
     if (region.value) row.append(el('span', 'tval', region.value))
     if (region.flag) {
       const badge = el('span', `badge ${region.flag}`, region.flag === 'ok' ? '✓' : region.flag === 'warn' ? '!' : '✗')
+      badge.setAttribute('aria-label', region.flag === 'ok' ? 'valid' : region.flag === 'warn' ? 'warning' : 'invalid')
       row.append(badge)
     }
     row.append(el('span', 'toff', `0x${hex(region.offset, 4)}+${region.length}`))
@@ -280,20 +396,24 @@ export class RegionTree {
 
     if (hasKids) {
       const kids = el('div', 'tkids')
+      kids.setAttribute('role', 'group')
       for (const child of region.children!) kids.append(this.renderNode(child, depth + 1))
       node.append(kids)
-      if (depth >= 1) node.classList.add('collapsed'), (tw.textContent = '▸')
+      row.setAttribute('aria-expanded', 'true')
+      if (depth >= 1) this.toggle(node, tw, true)
       tw.addEventListener('click', (e) => {
         e.stopPropagation()
-        const collapsed = node.classList.toggle('collapsed')
-        tw.textContent = collapsed ? '▸' : '▾'
+        this.toggle(node, tw)
       })
     }
 
     row.addEventListener('click', () => {
       this.selected?.classList.remove('sel')
+      this.selected?.setAttribute('aria-selected', 'false')
       row.classList.add('sel')
+      row.setAttribute('aria-selected', 'true')
       this.selected = row
+      this.setCurrent(row)
       this.note.innerHTML = ''
       const head = el('b', '', `${region.name}`)
       const span = el('span', '', `  ·  offset 0x${hex(region.offset, 4)} (${region.offset}), ${region.length} byte${region.length === 1 ? '' : 's'}`)

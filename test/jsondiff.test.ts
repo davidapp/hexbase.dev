@@ -62,6 +62,38 @@ describe('structural JSON diff', () => {
   })
 })
 
+describe('keyed array alignment', () => {
+  it('reports one insertion instead of shifting every later index', () => {
+    const a = { users: [{ id: 1, n: 'a' }, { id: 2, n: 'b' }] }
+    const b = { users: [{ id: 0, n: 'z' }, { id: 1, n: 'a' }, { id: 2, n: 'b' }] }
+    expect(diffJson(a, b).length).toBeGreaterThan(1) // index mode: churn
+    expect(diffJson(a, b, { arrayKey: 'id' })).toEqual([{ path: '$.users[id=0]', kind: 'added', right: '{"id":0,"n":"z"}' }])
+  })
+
+  it('reports changes inside matched items under the keyed path', () => {
+    const out = diffJson({ users: [{ id: 7, role: 'dev' }] }, { users: [{ id: 7, role: 'ops' }] }, { arrayKey: 'id' })
+    expect(out).toEqual([{ path: '$.users[id=7].role', kind: 'changed', left: '"dev"', right: '"ops"' }])
+  })
+
+  it('quotes string keys in the path and reports removals', () => {
+    const out = diffJson([{ name: 'a' }, { name: 'b' }], [{ name: 'a' }], { arrayKey: 'name' })
+    expect(out).toEqual([{ path: '$[name="b"]', kind: 'removed', left: '{"name":"b"}' }])
+  })
+
+  it('falls back to index alignment when the key is missing or duplicated', () => {
+    const dup = diffJson([{ id: 1 }, { id: 1 }], [{ id: 1 }], { arrayKey: 'id' })
+    expect(dup.map((e) => e.path)).toEqual(['$[1]'])
+    const missing = diffJson([{ id: 1 }, { x: 2 }], [{ id: 1 }], { arrayKey: 'id' })
+    expect(missing.map((e) => e.path)).toEqual(['$[1]'])
+    const primitives = diffJson([1, 2], [2, 1], { arrayKey: 'id' })
+    expect(primitives).toHaveLength(2)
+  })
+
+  it('still accepts the numeric max-entries argument', () => {
+    expect(diffJson({ a: 1, b: 2 }, { a: 2, b: 3 }, 1)).toHaveLength(1)
+  })
+})
+
 describe('line diff (Myers)', () => {
   const script = (a: string, b: string) =>
     diffLines(a, b)

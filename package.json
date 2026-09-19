@@ -11,6 +11,7 @@
     "deploy": "npm run build && wrangler deploy",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
     "types": "wrangler types",
     "db:local": "wrangler d1 execute hexbase-db --local --file ./schema.sql",
@@ -20,6 +21,7 @@
     "hono": "^4.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.1.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",

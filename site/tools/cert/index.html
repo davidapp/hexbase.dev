@@ -29,6 +29,7 @@
             "description": "Online X.509 certificate decoder and ASN.1 viewer: paste PEM or drop a DER file to see subject, issuer, validity with expiry countdown, key algorithm and size, subjectAltNames, key usage, extensions and SHA-256/SHA-1 fingerprints — with every field mapped onto the underlying bytes. Runs locally.",
             "featureList": [
               "Accepts PEM armor, bare base64, or binary DER files",
+              "Full chains: paste a fullchain.pem to see leaf → intermediates, linked by name (issuer = subject) and key identifier (AKI = SKI)",
               "Subject, issuer, serial, validity with expiry countdown",
               "Key algorithm and size (RSA bits, EC curve, Ed25519)",
               "subjectAltName, keyUsage, extendedKeyUsage, basicConstraints, Certificate Transparency SCTs",
@@ -53,6 +54,11 @@
                 "@type": "Question",
                 "name": "Is it safe to paste a certificate here?",
                 "acceptedAnswer": { "@type": "Answer", "text": "Certificates are public by design — they're sent in the clear in every TLS handshake — and this tool decodes them entirely in your browser; nothing is uploaded. Never paste private keys anywhere: the tool refuses PRIVATE KEY PEM blocks outright, because no browser tool should teach you that habit." }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I paste a whole chain (fullchain.pem)?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Paste every CERTIFICATE block and the decoder lists the chain — leaf, intermediates, and the root if present — and checks how each link is assembled: the issuer name must equal the next certificate's subject, and the authorityKeyIdentifier must equal its subjectKeyIdentifier. Servers normally omit the root (it lives in the client's trust store), which the panel notes rather than flags. This is assembly checking, not signature verification." }
               },
               {
                 "@type": "Question",
@@ -110,6 +116,12 @@
         </div>
       </div>
 
+      <section id="chain-section" class="hidden" style="margin-top: 18px">
+        <div class="pane-title"><span>certificate chain</span><span id="chain-count"></span></div>
+        <div class="chainlist" id="chain"></div>
+        <div class="tnote" id="chain-note">Click a certificate to inspect it. Links are checked by name (issuer = subject) and by key identifier (AKI = SKI) — assembly, not signature verification.</div>
+      </section>
+
       <section id="result" class="hidden" style="margin-top: 18px">
         <div class="card" id="summary" style="margin-bottom: 16px"></div>
         <div class="tool-grid thirds">
@@ -163,6 +175,14 @@
           Certificates are public by design — they're sent in the clear in every TLS handshake — and this tool decodes
           them entirely in your browser; nothing is uploaded. Never paste private keys anywhere: the tool refuses
           <code>PRIVATE KEY</code> PEM blocks outright, because no browser tool should teach you that habit.
+        </p>
+        <h3>Can I paste a whole chain (fullchain.pem)?</h3>
+        <p>
+          Yes. Paste every <code>CERTIFICATE</code> block and the decoder lists the chain — leaf, intermediates, and
+          the root if present — and checks how each link is assembled: the issuer name must equal the next
+          certificate's subject, and the <code>authorityKeyIdentifier</code> must equal its
+          <code>subjectKeyIdentifier</code>. Servers normally omit the root (it lives in the client's trust store),
+          which the panel notes rather than flags. This is assembly checking, not signature verification.
         </p>
         <h3>What is the difference between PEM and DER?</h3>
         <p>

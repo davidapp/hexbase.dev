@@ -13,6 +13,7 @@ const resultTitle = $('#diff-title')
 const out = $('#diff-out')
 const modeJson = $<HTMLButtonElement>('#mode-json')
 const modeText = $<HTMLButtonElement>('#mode-text')
+const arrayKey = $<HTMLInputElement>('#array-key')
 
 let mode: 'json' | 'text' = 'json'
 let copyPayload = ''
@@ -52,7 +53,7 @@ function compareJson(): void {
     resultSection.classList.add('hidden')
     return
   }
-  const entries = diffJson(a.value, b.value)
+  const entries = diffJson(a.value, b.value, { arrayKey: arrayKey.value.trim() || undefined })
   const s = diffStats(entries)
   stats.textContent = entries.length
     ? `${entries.length} difference${entries.length === 1 ? '' : 's'} · +${s.added} added · −${s.removed} removed · ~${s.changed} changed · ${s.type} type`
@@ -123,6 +124,9 @@ function compare(): void {
 }
 
 $('#compare').addEventListener('click', compare)
+arrayKey.addEventListener('change', () => {
+  if (mode === 'json' && (!resultSection.classList.contains('hidden') || msg.classList.contains('ok'))) compare()
+})
 for (const t of [left, right]) {
   t.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') compare()
@@ -155,6 +159,10 @@ $('#sample').addEventListener('click', () => {
       regions: ['us-east-1', 'eu-west-1'],
       limits: { rps: 100, burst: 200 },
       deprecated: true,
+      endpoints: [
+        { id: 'charge', method: 'POST', timeoutMs: 3000 },
+        { id: 'refund', method: 'POST', timeoutMs: 3000 },
+      ],
     },
     null,
     2,
@@ -166,10 +174,17 @@ $('#sample').addEventListener('click', () => {
       owner: { team: 'payments', oncall: 'grace', slack: '#payments' },
       regions: ['us-east-1', 'eu-west-1', 'ap-south-1'],
       limits: { rps: 250, burst: 200 },
+      endpoints: [
+        { id: 'health', method: 'GET', timeoutMs: 500 },
+        { id: 'charge', method: 'POST', timeoutMs: 5000 },
+        { id: 'refund', method: 'POST', timeoutMs: 3000 },
+      ],
     },
     null,
     2,
   )
+  // the endpoints array shows why keyed matching exists: clear the field to see index alignment churn
+  arrayKey.value = 'id'
   setMode('json')
   compare()
 })
@@ -177,7 +192,7 @@ $('#sample').addEventListener('click', () => {
 // share: both documents + mode as one JSON payload
 bindShare($('#share'), 'diff', () => {
   if (!left.value && !right.value) return null
-  const payload = JSON.stringify({ mode, left: left.value, right: right.value })
+  const payload = JSON.stringify({ mode, left: left.value, right: right.value, arrayKey: arrayKey.value.trim() || undefined })
   return { bytes: new TextEncoder().encode(payload) }
 })
 
@@ -185,9 +200,10 @@ const code = shareParam()
 if (code) {
   loadShare(code)
     .then(({ bytes }) => {
-      const data = JSON.parse(new TextDecoder().decode(bytes)) as { mode?: string; left?: string; right?: string }
+      const data = JSON.parse(new TextDecoder().decode(bytes)) as { mode?: string; left?: string; right?: string; arrayKey?: string }
       left.value = data.left ?? ''
       right.value = data.right ?? ''
+      arrayKey.value = data.arrayKey ?? ''
       setMode(data.mode === 'text' ? 'text' : 'json')
       compare()
       toast('Loaded shared comparison')

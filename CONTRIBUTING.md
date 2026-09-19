@@ -24,11 +24,15 @@ npm install
 npm run types        # generates Worker env types (needed for typecheck)
 npm test             # vitest — core parsers, decoders, tools
 npm run typecheck    # site/core and worker tsconfigs
+npm run build        # generates the format pages, then vite build → dist/
+npm run e2e          # Playwright page smoke tests against dist/ (once: npx playwright install chromium)
 npm run dev          # vite build + wrangler dev → http://localhost:8787
 ```
 
-CI runs test → typecheck → build on every pull request; it needs no secrets,
-so it works for forks.
+CI runs test → typecheck → build → page smoke tests on every pull request
+and on main; it needs no secrets, so it works for forks. The pages are
+keyboard-accessible (trees and lists follow the WAI-ARIA patterns) — keep new
+UI that way.
 
 ## Adding a file format parser (the most common contribution)
 

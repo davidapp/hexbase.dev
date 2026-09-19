@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { decodeOid, decodeTime, parseDer, tagName, toRegionTree } from '../src/core/asn1'
-import { describeValidity, parseAnyDer, parseCertificate, toDer } from '../src/core/x509'
+import { describeChain, describeValidity, parseAnyDer, parseCertificate, splitPem, toDer } from '../src/core/x509'
+import { SAMPLE_CHAIN_PEM } from '../site/js/certSample'
 
 // ---------------------------------------------------------------- DER builders
 
@@ -258,6 +259,37 @@ FrUGD7dej3D4AiAfs90UtVHGYKTXYYPIJlVqUK1amlBBby7M2KI7pSMjxA==
     expect(ext?.children?.map((c) => c.name)).toContain('SCT list (Certificate Transparency)')
     expect(ext?.children?.map((c) => c.name)).toContain('authorityInfoAccess')
     expect(result.warnings).toEqual([])
+  })
+
+  it('splits a fullchain.pem into every certificate, in order', () => {
+    const ders = splitPem(SAMPLE_CHAIN_PEM)
+    expect(ders).toHaveLength(3)
+    expect(ders.map((d) => parseCertificate(d).facts.subject)).toEqual([
+      'CN=example.com',
+      'C=US, O=SSL Corporation, CN=Cloudflare TLS Issuing ECC CA 3',
+      'C=US, O=SSL Corporation, CN=SSL.com TLS Transit ECC CA R2',
+    ])
+    expect(toDer(SAMPLE_CHAIN_PEM)).toEqual(ders[0])
+    expect(splitPem(new TextEncoder().encode(SAMPLE_CHAIN_PEM))).toHaveLength(3)
+  })
+
+  it('links a chain by issuer name and key identifier', () => {
+    const certs = splitPem(SAMPLE_CHAIN_PEM).map(parseCertificate)
+    expect(certs[0].facts.aki).toBe(certs[1].facts.ski)
+    expect(certs[1].facts.aki).toBe(certs[2].facts.ski)
+    const links = describeChain(certs)
+    expect(links.map((l) => l.role)).toEqual(['leaf', 'intermediate', 'intermediate'])
+    expect(links.map((l) => l.issuedBy)).toEqual([1, 2, null])
+    expect(links.map((l) => l.keyIdMatch)).toEqual([true, true, null])
+    expect(links[2].notes.join(' ')).toContain('trust store')
+  })
+
+  it('reports a broken link when the intermediate is wrong', () => {
+    const certs = splitPem(SAMPLE_CHAIN_PEM).map(parseCertificate)
+    const wrong = [certs[0], certs[2]] // leaf paired with its grandparent
+    const links = describeChain(wrong)
+    expect(links[0].issuedBy).toBeNull()
+    expect(links[0].notes.join(' ')).toContain('not found')
   })
 
   it('falls back to a generic ASN.1 view for non-certificate DER', () => {
