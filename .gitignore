@@ -6,3 +6,7 @@ site/formats/
 *.local
 .DS_Store
 worker-configuration.d.ts
+
+# Playwright output
+test-results/
+playwright-report/
