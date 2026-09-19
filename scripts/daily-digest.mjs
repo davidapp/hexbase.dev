@@ -95,10 +95,26 @@ async function shares() {
 async function health() {
   const t0 = Date.now()
   try {
-    const res = await fetch(`${SITE}/api/health`, { signal: AbortSignal.timeout(10_000) })
+    // A descriptive User-Agent: Node's default ("node") from a datacenter IP
+    // trips Cloudflare's bot heuristics, which would report a healthy site as down.
+    const res = await fetch(`${SITE}/api/health`, {
+      signal: AbortSignal.timeout(10_000),
+      headers: { 'user-agent': 'hexbase-digest/1.0 (+https://hexbase.dev/.well-known/security.txt)' },
+    })
     const ms = Date.now() - t0
     const body = await res.json().catch(() => ({}))
-    return { ok: res.ok && body.ok === true, status: res.status, ms }
+    const ok = res.ok && body.ok === true
+    // A 403 that is not our JSON comes from Cloudflare's bot protection acting on
+    // the runner's datacenter IP — report it as a blocked probe, not an outage.
+    const blocked = !ok && res.status === 403 && body.ok !== true
+    return {
+      ok,
+      status: res.status,
+      ms,
+      error: blocked
+        ? `blocked by Cloudflare bot protection (${res.headers.get('cf-mitigated') ?? 'runner IP'}) — probe, not outage`
+        : undefined,
+    }
   } catch (e) {
     return { ok: false, status: 0, ms: Date.now() - t0, error: e instanceof Error ? e.message : String(e) }
   }
