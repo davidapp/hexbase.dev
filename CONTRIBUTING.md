@@ -30,7 +30,7 @@ npm run dev          # vite build + wrangler dev → http://localhost:8787
 ```
 
 CI runs test → typecheck → build → page smoke tests on every pull request
-and on main; it needs no secrets, so it works for forks. The pages are
+and on main, and works for forks too. The pages are
 keyboard-accessible (trees and lists follow the WAI-ARIA patterns) — keep new
 UI that way.
 
