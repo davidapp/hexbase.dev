@@ -24,6 +24,10 @@
     {
       "binding": "METRICS",
       "dataset": "hexbase_metrics"
+    },
+    {
+      "binding": "HEALTH",
+      "dataset": "hexbase_health"
     }
   ],
 
@@ -32,9 +36,12 @@
     "head_sampling_rate": 1
   },
 
-  // Nightly purge of expired shared snippets (D1 rows + R2 objects).
+  // 03:17 nightly: purge expired shared snippets (D1 rows + R2 objects).
+  // Every 5 min: heartbeat into the hexbase_health dataset — the liveness
+  // signal the daily digest reads (an external probe from CI runners gets
+  // challenged by bot protection, so the Worker reports on itself).
   "triggers": {
-    "crons": ["17 3 * * *"]
+    "crons": ["17 3 * * *", "*/5 * * * *"]
   },
 
   // Share links use the request origin when this is empty; set it once

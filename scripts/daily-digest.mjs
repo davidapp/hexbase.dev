@@ -92,11 +92,11 @@ async function shares() {
   return { created: Number(row.created ?? 0), active: Number(row.active ?? 0) }
 }
 
-async function health() {
+/** External reachability probe. From CI runners Cloudflare's bot protection may
+ *  challenge it (datacenter IP) — that is reported as a blocked probe, not an outage. */
+async function edgeProbe() {
   const t0 = Date.now()
   try {
-    // A descriptive User-Agent: Node's default ("node") from a datacenter IP
-    // trips Cloudflare's bot heuristics, which would report a healthy site as down.
     const res = await fetch(`${SITE}/api/health`, {
       signal: AbortSignal.timeout(10_000),
       headers: { 'user-agent': 'hexbase-digest/1.0 (+https://hexbase.dev/.well-known/security.txt)' },
@@ -104,20 +104,36 @@ async function health() {
     const ms = Date.now() - t0
     const body = await res.json().catch(() => ({}))
     const ok = res.ok && body.ok === true
-    // A 403 that is not our JSON comes from Cloudflare's bot protection acting on
-    // the runner's datacenter IP — report it as a blocked probe, not an outage.
     const blocked = !ok && res.status === 403 && body.ok !== true
     return {
       ok,
       status: res.status,
       ms,
-      error: blocked
-        ? `blocked by Cloudflare bot protection (${res.headers.get('cf-mitigated') ?? 'runner IP'}) — probe, not outage`
-        : undefined,
+      error: blocked ? `blocked by Cloudflare bot protection (${res.headers.get('cf-mitigated') ?? 'runner IP'})` : undefined,
     }
   } catch (e) {
     return { ok: false, status: 0, ms: Date.now() - t0, error: e instanceof Error ? e.message : String(e) }
   }
+}
+
+/** The real liveness signal: the Worker's 5-minute cron writes a heartbeat into
+ *  the hexbase_health dataset; 288 per day when everything runs. */
+async function workerHeartbeat() {
+  if (!account || !cfToken) return { error: 'Cloudflare credentials not set' }
+  const [count, last] = await Promise.all([
+    aeQuery(`SELECT SUM(_sample_interval) AS n FROM hexbase_health WHERE timestamp > NOW() - INTERVAL '1' DAY`),
+    aeQuery(`SELECT MAX(timestamp) AS last FROM hexbase_health`),
+  ])
+  const n = Number(count[0]?.n ?? 0)
+  const lastRaw = last[0]?.last
+  const lastAt = lastRaw ? new Date(String(lastRaw).replace(' ', 'T') + (String(lastRaw).endsWith('Z') ? '' : 'Z')) : null
+  const minutesAgo = lastAt && !Number.isNaN(lastAt.getTime()) ? Math.round((Date.now() - lastAt.getTime()) / 60000) : null
+  return { count: n, minutesAgo, ok: minutesAgo !== null && minutesAgo <= 15 }
+}
+
+async function health() {
+  const [probe, heartbeat] = await Promise.all([edgeProbe(), settle(workerHeartbeat())])
+  return { probe, heartbeat }
 }
 
 async function github() {
@@ -162,9 +178,19 @@ else {
 }
 if (s.error) lines.push(`*Shares:* unavailable — ${s.error}`)
 else lines.push(`*Shares:* ${fmt(s.created)} created today  ·  ${fmt(s.active)} active`)
-lines.push(
-  h.ok ? `*Health:* ✅ /api/health ${h.ms} ms` : `*Health:* 🔴 /api/health ${h.status || 'unreachable'}${h.error ? ` (${h.error})` : ''}`,
-)
+{
+  const hb = h.heartbeat
+  const probe = h.probe
+  const hbText = hb.error
+    ? `heartbeat unavailable (${hb.error})`
+    : hb.minutesAgo === null
+      ? 'no heartbeat yet'
+      : `worker heartbeat ${fmt(hb.count)}/288 in 24h, last ${hb.minutesAgo} min ago`
+  const probeText = probe.ok
+    ? `edge /api/health ${probe.ms} ms`
+    : `edge probe ${probe.error ?? `HTTP ${probe.status || 'unreachable'}`}`
+  lines.push(`*Health:* ${hb.ok || probe.ok ? '✅' : '🔴'} ${hbText}  ·  ${probeText}`)
+}
 if (g.error) lines.push(`*GitHub:* unavailable — ${g.error}`)
 else lines.push(`*GitHub:* ★ ${fmt(g.stars)}${g.newStars ? ` (+${g.newStars})` : ''}  ·  ${g.openIssues} open issues  ·  ${g.openPRs} open PRs  ·  ${g.forks} forks`)
 

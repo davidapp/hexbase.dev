@@ -215,7 +215,12 @@ async function purgeExpiredShares(env: Env): Promise<void> {
 
 export default {
   fetch: app.fetch,
-  async scheduled(_event, env, ctx) {
+  async scheduled(event, env, ctx) {
+    if (event.cron === '*/5 * * * *') {
+      // Liveness heartbeat: one data point per tick, read back by the daily digest.
+      env.HEALTH?.writeDataPoint({ blobs: ['heartbeat'], doubles: [1], indexes: ['heartbeat'] })
+      return
+    }
     ctx.waitUntil(purgeExpiredShares(env))
   },
 } satisfies ExportedHandler<Env>
