@@ -17,7 +17,7 @@ test('every page loads without console errors', async ({ page }) => {
   for (const path of PAGES) {
     await page.goto(path)
     await expect(page).toHaveTitle(/hexbase\.dev/)
-    await expect(page.locator('footer a[href="https://github.com/davidapp/hexbase.dev"]').first()).toBeVisible()
+    await expect(page.locator('footer a[href="https://github.com/darvlab/hexbase.dev"]').first()).toBeVisible()
   }
   check()
 })

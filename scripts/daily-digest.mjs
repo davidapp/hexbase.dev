@@ -19,7 +19,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SITE = 'https://hexbase.dev'
-const REPO = 'davidapp/hexbase.dev'
+const REPO = 'darvlab/hexbase.dev'
 const DATASET = 'hexbase_metrics'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
